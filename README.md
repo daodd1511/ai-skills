@@ -12,6 +12,8 @@ No settings, credentials, or machine state live here (see decisions below).
 claude/
   skills/   - authored skills, symlinked into ~/.claude/skills/<name>
   agents/   - subagent definitions, symlinked into ~/.claude/agents/<name>.md
+  plugins/  - authored plugins (own .claude-plugin manifest), symlinked
+              into ~/.claude/skills/<name>
   CLAUDE.md - symlinked into ~/.claude/CLAUDE.md
 codex/
   skills/   - authored codex skills (empty for now)
@@ -35,10 +37,14 @@ codex/
 `claude/agents/code-locator.md` — read-only subagent for locating code
 (file:line lookups) without proposing fixes.
 
+`claude/plugins/codex` — `/codex` command + subagent that shells out to
+the OpenAI Codex CLI (`codex exec`). Self-authored, packaged as a plugin
+(has its own `.claude-plugin/plugin.json`) rather than a plain skill.
+
 ## Deliberately excluded
 
-- **caveman**, **codex** (bridge plugin), **frontend-design** — these came
-  from marketplaces/official Anthropic skill packages, not authored here.
+- **caveman**, **frontend-design** — these came from marketplaces/official
+  Anthropic skill packages, not authored here.
 - **settings.json / config.toml / auth.json** — secrets and machine-specific
   paths; never committed.
 
