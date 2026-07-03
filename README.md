@@ -29,6 +29,8 @@ codex/
 | angular-frontend-developer | Angular frontend scaffold |
 | react-frontend-developer | React frontend scaffold |
 | vue-frontend-developer | Vue frontend scaffold |
+| spec-plan | Turn a /grill-me PLAN.md into a phased EXECUTION.md |
+| spec-phase | Drive phased execution of a spec (start/resume phases) |
 
 `claude/agents/code-locator.md` — read-only subagent for locating code
 (file:line lookups) without proposing fixes.

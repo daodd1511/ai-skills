@@ -7,6 +7,8 @@ claude/skills/terse-commit -> ~/.claude/skills/terse-commit
 claude/skills/angular-frontend-developer -> ~/.claude/skills/angular-frontend-developer
 claude/skills/react-frontend-developer -> ~/.claude/skills/react-frontend-developer
 claude/skills/vue-frontend-developer -> ~/.claude/skills/vue-frontend-developer
+claude/skills/spec-plan -> ~/.claude/skills/spec-plan
+claude/skills/spec-phase -> ~/.claude/skills/spec-phase
 claude/agents/code-locator.md -> ~/.claude/agents/code-locator.md
 claude/CLAUDE.md -> ~/.claude/CLAUDE.md
 codex/AGENTS.md -> ~/.codex/AGENTS.md
