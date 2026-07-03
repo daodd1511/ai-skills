@@ -1,0 +1,12 @@
+# repo path -> install path
+# bootstrap.sh reads this file to create/repair symlinks.
+claude/skills/grill-me -> ~/.claude/skills/grill-me
+claude/skills/handoff -> ~/.claude/skills/handoff
+claude/skills/teach -> ~/.claude/skills/teach
+claude/skills/terse-commit -> ~/.claude/skills/terse-commit
+claude/skills/angular-frontend-developer -> ~/.claude/skills/angular-frontend-developer
+claude/skills/react-frontend-developer -> ~/.claude/skills/react-frontend-developer
+claude/skills/vue-frontend-developer -> ~/.claude/skills/vue-frontend-developer
+claude/agents/code-locator.md -> ~/.claude/agents/code-locator.md
+claude/CLAUDE.md -> ~/.claude/CLAUDE.md
+codex/AGENTS.md -> ~/.codex/AGENTS.md

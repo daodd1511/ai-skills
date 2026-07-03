@@ -1,0 +1,20 @@
+# Deny-all, then allow-list curated files only.
+*
+!*/
+!.gitignore
+!README.md
+!bootstrap.sh
+!links.txt
+!claude/skills/**
+!claude/agents/**
+!claude/CLAUDE.md
+!codex/skills/**
+!codex/AGENTS.md
+
+# Defensive: never allow these even if a future rule accidentally matches them.
+*.sqlite
+*.sqlite-*
+auth.json
+*.local.json
+history.jsonl
+.DS_Store
