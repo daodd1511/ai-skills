@@ -4,38 +4,30 @@
 
 Maintain strict separation between three layers. Never skip or cross layers.
 
-- **UI/View Layer**: Components, directives, pipes, forms — handles user interaction only. No business logic, no direct API calls.
-- **Domain/Business Layer**: Services, domain models (TypeScript types), utility functions — no UI knowledge, no DB/API knowledge.
-- **Repository/DTO Layer**: API clients, DTOs (Zod schemas), mappers — encapsulates all data access.
+- **UI/View Layer**: Components and composables — handle user interaction only. No business logic, no direct API calls.
+- **Domain/Business Layer**: Domain models (TypeScript types), pure business functions — no UI knowledge, no API knowledge.
+- **Repository/DTO Layer**: API clients, DTOs (zod schemas), mappers — encapsulates all data access.
 
 ## DTOs
 
-- Define DTOs with Zod schemas.
-- Infer TypeScript types with `z.infer<typeof schema>`.
+- Define DTOs with zod schemas; infer types with `z.infer<typeof schema>`.
 - Never use raw API response shapes in the UI layer.
 
 ## Domain Models
 
-- Use TypeScript `type` with `readonly` properties.
-- Business logic lives in pure utility functions, not components.
+- TypeScript `type` with `readonly` properties.
+- Business logic lives in pure functions, not components.
 
 ## Mappers
 
-- Transform DTOs ↔ Domain Models using a mapper pattern.
-- Use `secureParse` (safe Zod parse — logs on failure, returns `null`) to validate DTOs before mapping.
+- Transform DTOs ↔ Domain Models using a mapper pattern (`IMapper`, below).
+- Use `secureParse` (safe zod parse — logs on failure, returns `null`) to validate DTOs before mapping.
 - Keep all mapping logic centralized in mapper files.
-- See `references/secure-parse.md` and `references/mapper.md` for full definitions.
 
 ## Mocking
 
-- Mock data in the repository/business layer only (e.g., services with `of()` + `delay()`).
+- Mock data in the repository layer only; gate or remove before production.
 - Never mock data inside UI components.
-
-## References
-
-- Examples and full implementations: `references/architecture.md`
-- `secureParse` definition and usage: `references/secure-parse.md`
-- `IMapper` interface and pattern: `references/mapper.md`
 
 ---
 
@@ -46,16 +38,14 @@ Full end-to-end example of the three-layer architecture using `secureParse` and 
 ## Layer Overview
 
 ```
-UI / View Layer          → components, templates, forms
-Domain / Business Layer  → services, domain models, utilities
-Repository / DTO Layer   → API clients, Zod DTOs, mappers
+UI / View Layer          → components, composables
+Domain / Business Layer  → domain models, pure business functions
+Repository / DTO Layer   → API clients, zod DTOs, mappers
 ```
 
 ## secureParse
 
-Safe Zod parsing wrapper. Returns `null` on failure instead of throwing. Validation errors are logged; callers handle the null case.
-
-### Implementation
+Safe zod parsing wrapper. Returns `null` on failure instead of throwing. Validation errors are logged; callers handle the null case.
 
 ```ts
 import type { ZodSchema } from 'zod'
@@ -70,21 +60,16 @@ export function secureParse<T>(schema: ZodSchema<T>, data: unknown): T | null {
 }
 ```
 
-### Usage
+Why: prevents uncaught exceptions from invalid API shapes, keeps processing running despite partial data failures, centralizes validation error logging.
+
+## IMapper
 
 ```ts
-const dto = secureParse(userDtoSchema, rawApiResponse)
-if (!dto) return  // validation error already logged
-
-processUser(dto)  // ✅ dto is typed as UserDto
+export interface IMapper<TDto, TDomain> {
+  fromDto(dto: unknown): TDomain | null
+  toDto(domain: TDomain): TDto
+}
 ```
-
-### Why
-
-- Prevents uncaught exceptions from invalid API shapes.
-- Keeps processing running despite partial data failures.
-- Centralizes validation error logging.
-
 
 ## Complete Example — User Feature
 
@@ -117,14 +102,12 @@ export type User = {
 
 ### 3. Mapper (Repository layer)
 
-Uses `secureParse` to validate the raw DTO before mapping to domain model.
-
 ```ts
 import { secureParse } from './secure-parse'
 import { userDtoSchema } from './user.dto'
 import type { IMapper } from './mapper.interface'
 import type { UserDto } from './user.dto'
-import type { User } from './user.model'
+import type { User } from '../domain/user.model'
 
 export class UserMapper implements IMapper<UserDto, User> {
   fromDto(dto: unknown): User | null {
@@ -151,76 +134,100 @@ export class UserMapper implements IMapper<UserDto, User> {
 }
 ```
 
-### 4. Repository / API client (Repository layer)
+### 4. Repository (Repository layer)
 
 ```ts
 import { UserMapper } from './user.mapper'
-import type { User } from './user.model'
+import type { User } from '../domain/user.model'
 
 const mapper = new UserMapper()
 
-export async function fetchUsers(): Promise<User[]> {
-  const response = await fetch('/api/users')
+export async function fetchUsers(signal?: AbortSignal): Promise<User[]> {
+  const response = await fetch('/api/users', { signal })
   const raw: unknown[] = await response.json()
   return raw
     .map(dto => mapper.fromDto(dto))
     .filter((u): u is User => u !== null)  // drop invalid entries
 }
-
-export async function fetchUser(id: number): Promise<User | null> {
-  const response = await fetch(`/api/users/${id}`)
-  const raw: unknown = await response.json()
-  return mapper.fromDto(raw)
-}
 ```
 
-### 5. Service (Domain layer)
+### 5. Domain logic (Domain layer)
+
+Pure functions — no fetch, no refs, independently testable.
 
 ```ts
-import { fetchUsers, fetchUser } from '../repository/user.repository'
 import type { User } from './user.model'
 
-export async function getAdminUsers(): Promise<User[]> {
-  const users = await fetchUsers()
+export function adminsOf(users: readonly User[]): User[] {
   return users.filter(u => u.role === 'admin')
-}
-
-export async function getUserById(id: number): Promise<User | null> {
-  return fetchUser(id)
 }
 ```
 
-### 6. Component (UI/View layer)
+### 6. Composable + component (UI/View layer)
 
-Calls service only — no direct API calls, no mapper usage.
+The composable owns fetch orchestration (via the repository) and exposes
+readonly refs; the component only renders. With a query library (TanStack
+Query / Pinia Colada), the composable wraps `useQuery` instead — same
+boundary.
 
 ```ts
-// Angular example
-import { Component, OnInit } from '@angular/core'
-import { getUserById } from '../domain/user.service'
+import { ref, readonly, watchEffect, onWatcherCleanup } from 'vue'
+import { fetchUsers } from '../repository/user.repository'
 import type { User } from '../domain/user.model'
 
-@Component({ selector: 'app-user-detail', templateUrl: './user-detail.component.html' })
-export class UserDetailComponent implements OnInit {
-  user: User | null = null
+export function useUsers() {
+  const users = ref<User[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  async ngOnInit() {
-    this.user = await getUserById(1)
-  }
+  watchEffect(async () => {
+    const controller = new AbortController()
+    onWatcherCleanup(() => controller.abort())  // must be before first await
+    loading.value = true
+    error.value = null
+    try {
+      users.value = await fetchUsers(controller.signal)
+    } catch (e) {
+      if (!controller.signal.aborted) error.value = 'Failed to load users'
+    } finally {
+      loading.value = false
+    }
+  })
+
+  return { users: readonly(users), loading: readonly(loading), error: readonly(error) }
 }
+```
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useUsers } from '../composables/useUsers'
+import { adminsOf } from '../domain/user.logic'
+
+const { users, loading, error } = useUsers()
+const admins = computed(() => adminsOf(users.value))
+</script>
+
+<template>
+  <p v-if="loading">Loading…</p>
+  <p v-else-if="error">{{ error }}</p>
+  <ul v-else>
+    <li v-for="user in admins" :key="user.id">{{ user.fullName }}</li>
+  </ul>
+</template>
 ```
 
 ## Rules Summary
 
 | Layer | Allowed | Forbidden |
 |-------|---------|-----------|
-| UI / View | Call domain services, bind domain models | API calls, mappers, raw DTOs |
-| Domain / Business | Pure logic, call repository | UI knowledge, direct API calls |
+| UI / View | Call composables, bind domain models | API calls, mappers, raw DTOs |
+| Domain / Business | Pure logic | UI knowledge, direct API calls |
 | Repository / DTO | API clients, `secureParse`, mappers | Business logic, UI knowledge |
 
 ## Key Constraints
 
 - `secureParse` only inside `fromDto` — never `schema.parse()`.
-- Mapper files own all DTO ↔ domain transformation; no mapping in services or components.
+- Mapper files own all DTO ↔ domain transformation; no mapping in composables or components.
 - Invalid DTOs return `null` from `fromDto`; callers filter nulls with a type guard.
 - Domain models use `readonly` properties — treat as immutable.
