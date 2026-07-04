@@ -5,37 +5,29 @@
 Maintain strict separation between three layers. Never skip or cross layers.
 
 - **UI/View Layer**: Components, directives, pipes, forms — handles user interaction only. No business logic, no direct API calls.
-- **Domain/Business Layer**: Services, domain models (TypeScript types), utility functions — no UI knowledge, no DB/API knowledge.
-- **Repository/DTO Layer**: API clients, DTOs (Zod schemas), mappers — encapsulates all data access.
+- **Domain/Business Layer**: Services, domain models (TypeScript types), utility functions — no UI knowledge, no HTTP/API knowledge.
+- **Repository/DTO Layer**: API clients, DTOs (zod schemas), mappers — encapsulates all data access.
 
 ## DTOs
 
-- Define DTOs with Zod schemas.
-- Infer TypeScript types with `z.infer<typeof schema>`.
+- Define DTOs with zod schemas; infer types with `z.infer<typeof schema>`.
 - Never use raw API response shapes in the UI layer.
 
 ## Domain Models
 
-- Use TypeScript `type` with `readonly` properties.
-- Business logic lives in pure utility functions, not components.
+- TypeScript `type` with `readonly` properties.
+- Business logic lives in pure functions or domain services, not components.
 
 ## Mappers
 
-- Transform DTOs ↔ Domain Models using a mapper pattern.
-- Use `secureParse` (safe Zod parse — logs on failure, returns `null`) to validate DTOs before mapping.
+- Transform DTOs ↔ Domain Models using a mapper pattern (`IMapper`, below).
+- Use `secureParse` (safe zod parse — logs on failure, returns `null`) to validate DTOs before mapping.
 - Keep all mapping logic centralized in mapper files.
-- See `references/secure-parse.md` and `references/mapper.md` for full definitions.
 
 ## Mocking
 
-- Mock data in the repository/business layer only (e.g., services with `of()` + `delay()`).
+- Mock data in the repository layer only (`of(data).pipe(delay(ms))`); gate or remove before production.
 - Never mock data inside UI components.
-
-## References
-
-- Examples and full implementations: `references/architecture.md`
-- `secureParse` definition and usage: `references/secure-parse.md`
-- `IMapper` interface and pattern: `references/mapper.md`
 
 ---
 
@@ -48,14 +40,12 @@ Full end-to-end example of the three-layer architecture using `secureParse` and 
 ```
 UI / View Layer          → components, templates, forms
 Domain / Business Layer  → services, domain models, utilities
-Repository / DTO Layer   → API clients, Zod DTOs, mappers
+Repository / DTO Layer   → API clients, zod DTOs, mappers
 ```
 
 ## secureParse
 
-Safe Zod parsing wrapper. Returns `null` on failure instead of throwing. Validation errors are logged; callers handle the null case.
-
-### Implementation
+Safe zod parsing wrapper. Returns `null` on failure instead of throwing. Validation errors are logged; callers handle the null case.
 
 ```ts
 import type { ZodSchema } from 'zod'
@@ -70,21 +60,16 @@ export function secureParse<T>(schema: ZodSchema<T>, data: unknown): T | null {
 }
 ```
 
-### Usage
+Why: prevents uncaught exceptions from invalid API shapes, keeps processing running despite partial data failures, centralizes validation error logging.
+
+## IMapper
 
 ```ts
-const dto = secureParse(userDtoSchema, rawApiResponse)
-if (!dto) return  // validation error already logged
-
-processUser(dto)  // ✅ dto is typed as UserDto
+export interface IMapper<TDto, TDomain> {
+  fromDto(dto: unknown): TDomain | null
+  toDto(domain: TDomain): TDto
+}
 ```
-
-### Why
-
-- Prevents uncaught exceptions from invalid API shapes.
-- Keeps processing running despite partial data failures.
-- Centralizes validation error logging.
-
 
 ## Complete Example — User Feature
 
@@ -116,8 +101,6 @@ export type User = {
 ```
 
 ### 3. Mapper (Repository layer)
-
-Uses `secureParse` to validate the raw DTO before mapping to domain model.
 
 ```ts
 import { secureParse } from './secure-parse'
@@ -151,62 +134,85 @@ export class UserMapper implements IMapper<UserDto, User> {
 }
 ```
 
-### 4. Repository / API client (Repository layer)
+### 4. Repository (Repository layer)
+
+Uses `HttpClient`, validates and maps every payload, drops invalid entries.
 
 ```ts
+import { Injectable, inject } from '@angular/core'
+import { HttpClient } from '@angular/common/http'
+import { map, type Observable } from 'rxjs'
 import { UserMapper } from './user.mapper'
-import type { User } from './user.model'
+import type { User } from '../domain/user.model'
 
-const mapper = new UserMapper()
+@Injectable({ providedIn: 'root' })
+export class UserRepository {
+  private readonly http = inject(HttpClient)
+  private readonly mapper = new UserMapper()
 
-export async function fetchUsers(): Promise<User[]> {
-  const response = await fetch('/api/users')
-  const raw: unknown[] = await response.json()
-  return raw
-    .map(dto => mapper.fromDto(dto))
-    .filter((u): u is User => u !== null)  // drop invalid entries
-}
+  getUsers(): Observable<User[]> {
+    return this.http.get<unknown[]>('/api/users').pipe(
+      map(raw => raw
+        .map(dto => this.mapper.fromDto(dto))
+        .filter((u): u is User => u !== null)),  // drop invalid entries
+    )
+  }
 
-export async function fetchUser(id: number): Promise<User | null> {
-  const response = await fetch(`/api/users/${id}`)
-  const raw: unknown = await response.json()
-  return mapper.fromDto(raw)
+  getUser(id: number): Observable<User | null> {
+    return this.http.get<unknown>(`/api/users/${id}`).pipe(
+      map(raw => this.mapper.fromDto(raw)),
+    )
+  }
 }
 ```
 
-### 5. Service (Domain layer)
+### 5. Domain service (Domain layer)
+
+Business rules only — no HTTP, no DTOs.
 
 ```ts
-import { fetchUsers, fetchUser } from '../repository/user.repository'
+import { Injectable, inject } from '@angular/core'
+import { map, type Observable } from 'rxjs'
+import { UserRepository } from '../repository/user.repository'
 import type { User } from './user.model'
 
-export async function getAdminUsers(): Promise<User[]> {
-  const users = await fetchUsers()
-  return users.filter(u => u.role === 'admin')
-}
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private readonly repo = inject(UserRepository)
 
-export async function getUserById(id: number): Promise<User | null> {
-  return fetchUser(id)
+  getAdminUsers(): Observable<User[]> {
+    return this.repo.getUsers().pipe(
+      map(users => users.filter(u => u.role === 'admin')),
+    )
+  }
 }
 ```
 
 ### 6. Component (UI/View layer)
 
-Calls service only — no direct API calls, no mapper usage.
+Calls the domain service only; converts to a signal at the boundary
+(`toSignal`, v16+). On pre-v16 code use the `async` pipe instead — never a
+hand-managed `.subscribe()`.
 
 ```ts
-// Angular example
-import { Component, OnInit } from '@angular/core'
-import { getUserById } from '../domain/user.service'
-import type { User } from '../domain/user.model'
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core'
+import { toSignal } from '@angular/core/rxjs-interop'
+import { UserService } from '../domain/user.service'
 
-@Component({ selector: 'app-user-detail', templateUrl: './user-detail.component.html' })
-export class UserDetailComponent implements OnInit {
-  user: User | null = null
-
-  async ngOnInit() {
-    this.user = await getUserById(1)
-  }
+@Component({
+  selector: 'app-admin-list',
+  template: `
+    @for (user of admins() ?? []; track user.id) {
+      <span>{{ user.fullName }}</span>
+    } @empty {
+      <p>No admins.</p>
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AdminListComponent {
+  private readonly userService = inject(UserService)
+  protected readonly admins = toSignal(this.userService.getAdminUsers())
 }
 ```
 
@@ -214,9 +220,9 @@ export class UserDetailComponent implements OnInit {
 
 | Layer | Allowed | Forbidden |
 |-------|---------|-----------|
-| UI / View | Call domain services, bind domain models | API calls, mappers, raw DTOs |
-| Domain / Business | Pure logic, call repository | UI knowledge, direct API calls |
-| Repository / DTO | API clients, `secureParse`, mappers | Business logic, UI knowledge |
+| UI / View | Call domain services, bind domain models | HTTP calls, mappers, raw DTOs |
+| Domain / Business | Pure logic, call repository | UI knowledge, direct HTTP calls |
+| Repository / DTO | `HttpClient`, `secureParse`, mappers | Business logic, UI knowledge |
 
 ## Key Constraints
 
