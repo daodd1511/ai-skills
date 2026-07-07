@@ -29,7 +29,7 @@
 * Flag tradeoffs (perf, security, maintainability) proactively even when not asked.
 
 ## Git Conventions
-* Commit messages: Short and concise, explain *why*, not *what* — the diff already shows what changed.
+* Use the `terse-commit` skill to draft every commit message.
 * Always create new commits; never amend or force-push without explicit instruction.
 * Stage specific files by name; never `git add -A` or `git add .`.
 * Split unrelated changes into separate, meaningful commits — do not lump everything
@@ -41,3 +41,6 @@
 * When blocked by ambiguity that affects design, ask — don't guess and build on a guess.
 * "Investigate" means read-only: root-cause and report findings, do not edit code. Only make
   the fix after I explicitly ask for it.
+* When a project defines its own version of a skill (scoped, e.g. `<dir>:<skill-name>`),
+  prefer it over the same-named global skill — the local one is more specific to that
+  codebase.
