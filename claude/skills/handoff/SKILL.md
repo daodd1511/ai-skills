@@ -10,6 +10,8 @@ Include a "suggested skills" section in the document, which suggests skills that
 
 Do not duplicate content already captured in other artifacts (PRDs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
 
+If the workspace tracks durable state in its own artifacts (e.g. `specs/*/EXECUTION.md` STATUS blocks, git branches/commits), reference that state by path — never restate it. The handoff document is a session baton, not authoritative state; open it with a line saying so (e.g. "Session baton — advisory context, not state").
+
 Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
 
 If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
