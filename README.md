@@ -9,14 +9,14 @@ No settings, credentials, or machine state live here (see decisions below).
 ## Layout
 
 ```
+skills/     - authored skills, shared across agents: symlinked into both
+              ~/.claude/skills/<name> and ~/.codex/skills/<name>
 claude/
-  skills/   - authored skills, symlinked into ~/.claude/skills/<name>
   agents/   - subagent definitions, symlinked into ~/.claude/agents/<name>.md
   plugins/  - authored plugins (own .claude-plugin manifest), symlinked
               into ~/.claude/skills/<name>
   CLAUDE.md - symlinked into ~/.claude/CLAUDE.md
 codex/
-  skills/   - authored codex skills (empty for now)
   AGENTS.md - symlinked into ~/.codex/AGENTS.md
 ```
 
