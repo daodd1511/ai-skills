@@ -13,17 +13,23 @@ The rulebook (state model, branch model, gate lanes, checkpoints) is `CLAUDE.md`
 
 ## Step 0 — Load state
 
-1. Read `specs/<feature-slug>/PLAN.md` in full. If it doesn't exist, stop and ask for the
+1. Verify the rulebook exists: project `CLAUDE.md` must contain a "Spec-Driven Execution
+   Workflow" section. If it's absent, stop and tell the user — the state model
+   (`done-with-debt`, `[~]`, checkpoints, parking) is defined there, and improvising
+   substitute definitions would leave EXECUTION.md meaning different things to spec-phase
+   later. Offer to add the rulebook section first.
+2. Read `specs/<feature-slug>/PLAN.md` in full. If it doesn't exist, stop and ask for the
    slug or tell the user to run `/grill-me` first.
-2. Check whether `specs/<feature-slug>/EXECUTION.md` already exists. If it does and has any
+3. Check whether `specs/<feature-slug>/EXECUTION.md` already exists. If it does and has any
    checked-off items, stop — regenerating would destroy execution history. Ask the user
    whether they want to append new phases or start over (only start over if they explicitly
-   say so).
-3. **One-spec-in-flight check**: scan the STATUS blocks of every other
-   `specs/*/EXECUTION.md`. If another spec has a phase in `in-progress` (or uncommitted
-   work on its branch), stop — don't plan a new spec on top of one mid-flight; the user
-   must finish or park it first.
-4. Resolve the **integration branch** (check `CLAUDE.md`, then `git branch` for the
+   say so). Mid-phase corrections to unchecked items and gate scope are spec-phase's job
+   (recorded amendments), not a reason to regenerate here.
+4. **One-spec-in-flight check**: one `rg -l 'in-progress' specs/*/EXECUTION.md` — do not
+   read the other EXECUTION.md files in full. If another spec has a phase in `in-progress`
+   (or uncommitted work on its branch), stop — don't plan a new spec on top of one
+   mid-flight; the user must finish or park it first.
+5. Resolve the **integration branch** (check `CLAUDE.md`, then `git branch` for the
    convention in use — currently `develop`). Name it explicitly in EXECUTION.md; never
    write a hardcoded assumption.
 
@@ -72,9 +78,25 @@ know where to start.
 
 Gates come in **two lanes**:
 
-- **Agent gate (hard)**: typecheck command(s) scoped to the packages the phase touches,
-  test suite, build. Must pass before the PR is opened. Only write items here the agent can
-  actually run in this environment. If an agent-owed check is foreseeably
+- **Agent gate (hard)**: typecheck and tests scoped to the phase's changes — never the
+  whole repo; full-project gates bloat token/wall-clock cost with output about code the
+  phase never touched.
+  - *Typecheck*: only the files the phase changed or added. If the toolchain can't
+    soundly check single files (plain `tsc` loses project context), fall back to the
+    narrowest project scope that contains them (e.g. `tsc --noEmit -p <touched-package>`)
+    — never the monorepo root when only one package changed. Note: a change to a shared/
+    exported type can break files outside the changed set; if a phase touches shared
+    types, widen the typecheck scope to the packages that consume them and say so in the
+    gate item.
+  - *Tests*: only tests related to the changed files — prefer runner-native filters
+    (`jest --findRelatedTests <files>`, `vitest related <files>`) or explicit test-file
+    paths named in the gate item; not the full suite.
+  - *Build*: only if the phase's changes can plausibly break it (config, entry points,
+    codegen); skip it for leaf-level code changes already covered by typecheck.
+
+  Write the concrete scoped command(s) into the gate item — an agent picking up the phase
+  must not have to decide the scope itself. Must pass before the PR is opened. Only write
+  items here the agent can actually run in this environment. If an agent-owed check is foreseeably
   environment-blocked (needs credentials, a live service), say so in the item now — at
   execution time it becomes `[~]` with substitute evidence, per the rulebook.
 - **Review checklist**: the manual scenarios (browser walkthroughs, visual checks) the
@@ -110,7 +132,8 @@ or off `<integration-branch>` if phase 1, or if sequential mode is opted in)
 - [ ] <item naming exact files/functions>
 
 **Agent gate (hard):**
-- [ ] <typecheck / test / build commands>
+- [ ] <typecheck command scoped to this phase's changed/added files (or narrowest containing package)>
+- [ ] <test command filtered to tests related to the changed files — not the full suite>
 
 **Review checklist (user, at PR review):**
 - [ ] <manual scenario>
@@ -118,6 +141,12 @@ or off `<integration-branch>` if phase 1, or if sequential mode is opted in)
 **On completion:** run agent gate, update STATUS + checkboxes, stop and ask before
 push/PR. Review checklist goes into the PR description.
 ```
+
+**Keep it terse.** EXECUTION.md is re-read at the start of every spec-phase session, so
+every line in it is a recurring token cost for the whole life of the spec. One line per
+checklist item; the phase rationale is one line; do not restate PLAN.md's reasoning or
+paste its prose — reference its section names (`per PLAN.md → "Schema Changes"`) and let
+the executing agent read that section only if the item alone is ambiguous.
 
 Write the file. Do not create branches or touch code yet.
 
@@ -140,3 +169,7 @@ skill — do not auto-start execution, starting a phase still needs the explicit
   confirmation.
 - Do not put agent-unrunnable manual checks in the agent gate — they belong in the review
   checklist lane.
+- Do not write repo-wide gate commands (`tsc --noEmit` at the root, the full test suite)
+  when the phase touches a subset — the gate's scope is part of the plan, and spec-phase
+  is bound to run it exactly as written.
+- Do not copy PLAN.md prose into EXECUTION.md — reference sections by name instead.

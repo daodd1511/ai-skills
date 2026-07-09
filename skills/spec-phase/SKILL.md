@@ -10,28 +10,36 @@ The rulebook (state model, branch model, gate lanes, checkpoints, parking) is `C
 
 ## Step 0 — Locate state from git first
 
-1. Run `git status` and `git branch --show-current`. The branch name encodes spec+phase;
+1. Verify the rulebook exists: project `CLAUDE.md` must contain a "Spec-Driven Execution
+   Workflow" section. If it's absent, stop and tell the user — do not improvise meanings
+   for `done-with-debt`, `[~]`, or the checkpoint rules; they are defined there.
+2. Run `git status` and `git branch --show-current`. The branch name encodes spec+phase;
    the working tree and commit log encode progress. **This is the authoritative state.**
-2. Read `specs/<feature-slug>/EXECUTION.md` — its STATUS block and checklist (ask the user
+3. Read `specs/<feature-slug>/EXECUTION.md` — its STATUS block and checklist (ask the user
    for the slug if not given and the current branch doesn't encode it — do not guess
    between multiple specs under `specs/`).
-3. If STATUS disagrees with git on a mechanical fact (which branch exists, what's
+4. If STATUS disagrees with git on a mechanical fact (which branch exists, what's
    committed, what's merged), **git wins silently** — correct STATUS to match, no
    user-reconciliation ceremony. STATUS is only trusted for what git can't express:
    verification debt, park reasons, phase intent.
-4. Read `specs/<feature-slug>/PLAN.md` for the decisions the phase must honor.
-5. `HANDOFF.md`, if present, is advisory context only (why something was parked, what the
+5. Do **not** read PLAN.md up front. Checklist items name their exact files/functions
+   (spec-plan guarantees this), so the checklist is normally sufficient. Open PLAN.md only
+   when a specific item is ambiguous, and read only the section that item references —
+   never the whole file on a routine start or resume.
+6. `HANDOFF.md`, if present, is advisory context only (why something was parked, what the
    user said) — never resume from it, never treat it as state.
-6. **One-spec-in-flight check**: scan other `specs/*/EXECUTION.md` STATUS blocks. If a
-   different spec has an `in-progress` phase, stop — the user must finish or park it
-   before this spec proceeds.
+7. **One-spec-in-flight check**: one `rg -l 'in-progress' specs/*/EXECUTION.md` — do not
+   read the other EXECUTION.md files in full. If a different spec has an `in-progress`
+   phase, stop — the user must finish or park it before this spec proceeds.
 
 ## Step 1 — Decide: resume, or start the next phase
 
 - A phase is **in-progress** iff it has unchecked **non-deferred** items — `[~]` deferred
   items do not count as unfinished. If the current branch matches an in-progress phase →
   **resume**: continue from the first unchecked item, do not re-do checked items, do not
-  re-ask for authorization (the original phase-start already covers it).
+  re-ask for authorization (the original phase-start already covers it). Trust checked
+  items — do not re-open or re-verify the files behind them "to rebuild context"; read a
+  prior item's files only when the current item directly builds on them.
 - If the current phase is `done` or `done-with-debt` and merged → **start next phase**:
   requires a fresh explicit go-ahead from the user, do not assume it.
 - If the checklist is fully checked but the agent gate was never actually run → stop, run
@@ -52,9 +60,36 @@ The rulebook (state model, branch model, gate lanes, checkpoints, parking) is `C
 4. Do not push or open a PR without a separate explicit go-ahead, even though the commits
    themselves were pre-authorized by starting the phase.
 
+## Mid-phase amendments
+
+Execution discovers scope plans miss. EXECUTION.md may be amended during an in-progress
+phase, but only under these rules:
+
+- **Necessary-but-unplanned work** (a checklist item can't be completed without it): add
+  unchecked item(s) naming the exact files, tagged `(amended <date>)`, and list the
+  amendments in the phase-completion report. If instead it's *new scope* beyond what
+  PLAN.md decided, stop and ask — new scope goes through the plan, not smuggled into a
+  phase.
+- **Gate scope follows the real diff**: if the phase's actual changes exceed what the
+  written gate covers (files/packages the plan didn't anticipate), widen the gate item in
+  EXECUTION.md to cover the actual changed set *before* running it, tagged the same way.
+  This is the only sanctioned widening — scope tracks the diff, never "for safety".
+- **Checked items are immutable**: never edit, uncheck, or delete a checked item. A
+  correction to already-done work is a new `(amended)` item.
+- Restructuring phases (splitting, reordering, adding one) is spec-plan's job — stop and
+  ask rather than doing it here.
+
 ## Step 3 — Completing a phase
 
 1. Run the **agent gate** exactly as written in `EXECUTION.md` (typecheck, tests, build).
+   Exactly means exactly: do not widen the scope (no repo-wide typecheck or full test
+   suite "for safety" when the gate is scoped to the phase's files — wider is not safer,
+   it burns tokens on code the phase never touched), and do not narrow or substitute a
+   different command. If the phase's diff outgrew the written gate, that's a recorded
+   amendment (see "Mid-phase amendments"), made before running — not an ad-hoc widening at
+   run time. If a written gate command is wrong or won't run, stop, fix it in
+   EXECUTION.md, tell the user, then run the corrected command. When a gate fails, quote
+   only the failing portion of the output, not the full log.
    All must actually pass. An item may become `[~]` deferred only if environment-blocked
    (missing tool/credentials, not effort) — record substitute evidence inline and mirror
    it in STATUS's verification-debt list; the phase state is then `done-with-debt`.
@@ -95,3 +130,10 @@ WIP commit at the next real commit.
 - Do not mark `[~]` for anything that is merely tedious — deferral is for environment
   blocks only, with evidence.
 - Do not squash a phase's commits into one, and do not batch-check the checklist at the end.
+- Do not read PLAN.md in full on a routine start or resume — only the section a specific
+  ambiguous item references.
+- Do not widen the agent gate beyond its written scope — except via a recorded
+  `(amended)` edit when the phase's actual diff exceeds the gate's coverage — and do not
+  silently substitute a different command when the written one fails to run.
+- Do not edit, uncheck, or delete checked items when amending — corrections are new items.
+- Do not re-verify already-checked items when resuming — the checklist is the record.
