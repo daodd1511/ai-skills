@@ -2,7 +2,8 @@
 
 Personal library of authored Claude Code / Codex skills, agents, and
 instruction files. Private repo, live-synced via symlinks — this repo is
-the source of truth; `~/.claude` and `~/.codex` hold symlinks pointing here.
+the source of truth; `~/.claude`, `~/.agents`, and `~/.codex` hold symlinks
+pointing here.
 
 No settings, credentials, or machine state live here (see decisions below).
 
@@ -10,7 +11,9 @@ No settings, credentials, or machine state live here (see decisions below).
 
 ```
 skills/     - authored skills, shared across agents: symlinked into both
-              ~/.claude/skills/<name> and ~/.codex/skills/<name>
+              ~/.claude/skills/<name> and ~/.agents/skills/<name> (the
+              latter is a shared cross-provider location — Codex and
+              others resolve skills from there; see links.txt)
 claude/
   agents/   - subagent definitions, symlinked into ~/.claude/agents/<name>.md
   plugins/  - authored plugins (own .claude-plugin manifest), symlinked

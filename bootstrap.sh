@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Symlinks curated skills/agents/instruction files from this repo into
-# ~/.claude and ~/.codex, per links.txt. Idempotent: safe to re-run.
+# ~/.claude, ~/.agents, and ~/.codex, per links.txt. Idempotent: safe to re-run.
 #
 # First-time adoption: if the install path already has a real file/dir
 # (not a symlink) and the repo copy doesn't exist yet, move it into the
