@@ -28,6 +28,20 @@
 * Lead with the answer/decision, then reasoning — not the other way around.
 * Flag tradeoffs (perf, security, maintainability) proactively even when not asked.
 
+## Writing Rules (Orwell, 1946)
+These govern prose: docs, PR text, and chat replies. Commit messages follow
+the `terse-commit` skill instead. Never touch code or technical terms — when
+a technical term is the shortest exact word for a senior reader, it stays.
+Swap in everyday words only where precision survives.
+1. Never use a metaphor, simile or other figure of speech which you are used to seeing in print.
+2. Never use a long word where a short one will do.
+3. If it is possible to cut a word out, always cut it out.
+4. Never use the passive where you can use the active.
+5. Never use a foreign phrase, a scientific word or a jargon word if you can think of an everyday English equivalent.
+6. Break any of these rules sooner than say anything outright barbarous.
+
+Review every prose output against these rules before delivering.
+
 ## Git Conventions
 * Use the `terse-commit` skill to draft every commit message.
 * Always create new commits; never amend or force-push without explicit instruction.
@@ -36,6 +50,7 @@
   into one.
 
 ## Working Style
+* When I ask a question, answer only — do not edit code, run commands that change state, or take other action unless I explicitly approve it first.
 * For multi-file or architectural changes, propose a short plan before editing.
 * For bounded fixes (typos, single-function changes), just make the edit.
 * When blocked by ambiguity that affects design, ask — don't guess and build on a guess.
