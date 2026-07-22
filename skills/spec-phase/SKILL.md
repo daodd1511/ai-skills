@@ -12,7 +12,12 @@ The rulebook (state model, branch model, gate lanes, checkpoints, parking) is `C
 
 1. Verify the rulebook exists: project `CLAUDE.md` must contain a "Spec-Driven Execution
    Workflow" section. If it's absent, stop and tell the user — do not improvise meanings
-   for `done-with-debt`, `[~]`, or the checkpoint rules; they are defined there.
+   for `done-with-debt`, `[~]`, or the checkpoint rules; they are defined there. Offer to
+   add it from the `spec-plan` skill's `references/rulebook.md` template (sibling skill dir:
+   `../spec-plan/references/rulebook.md`): resolve its placeholders against the project,
+   drop the leading `<!-- TEMPLATE -->` comment, confirm the values with the user, and
+   append the section to the project `CLAUDE.md`. Do not proceed until it exists — normally
+   `spec-plan` already added it, so a fresh project should run `/spec-plan` first.
 2. Run `git status` and `git branch --show-current`. The branch name encodes spec+phase;
    the working tree and commit log encode progress. **This is the authoritative state.**
 3. Read `specs/<feature-slug>/EXECUTION.md` — its STATUS block and checklist (ask the user
@@ -70,10 +75,10 @@ phase, but only under these rules:
   amendments in the phase-completion report. If instead it's *new scope* beyond what
   PLAN.md decided, stop and ask — new scope goes through the plan, not smuggled into a
   phase.
-- **Gate scope follows the real diff**: if the phase's actual changes exceed what the
-  written gate covers (files/packages the plan didn't anticipate), widen the gate item in
-  EXECUTION.md to cover the actual changed set *before* running it, tagged the same way.
-  This is the only sanctioned widening — scope tracks the diff, never "for safety".
+- **Gate arguments come from the real diff**: a dependency-aware test gate
+  (`vitest related --run <files>`, `jest --findRelatedTests <files>`) takes the phase's
+  actual changed files as arguments — compute them from the diff at run time, don't reuse
+  a stale list the plan guessed. The runner resolves consumers from there.
 - **Checked items are immutable**: never edit, uncheck, or delete a checked item. A
   correction to already-done work is a new `(amended)` item.
 - Restructuring phases (splitting, reordering, adding one) is spec-plan's job — stop and
@@ -81,13 +86,15 @@ phase, but only under these rules:
 
 ## Step 3 — Completing a phase
 
-1. Run the **agent gate** exactly as written in `EXECUTION.md` (typecheck, tests, build).
-   Exactly means exactly: do not widen the scope (no repo-wide typecheck or full test
-   suite "for safety" when the gate is scoped to the phase's files — wider is not safer,
-   it burns tokens on code the phase never touched), and do not narrow or substitute a
-   different command. If the phase's diff outgrew the written gate, that's a recorded
-   amendment (see "Mid-phase amendments"), made before running — not an ad-hoc widening at
-   run time. If a written gate command is wrong or won't run, stop, fix it in
+1. Run the local **agent gate** exactly as written in `EXECUTION.md` (typecheck, tests,
+   build). The `CI green on the phase PR` item is the one exception — it cannot run
+   pre-PR and resolves in step 5. Exactly means exactly: do not substitute a different command, and in particular do not
+   narrow it — never swap a dependency-aware test command for a list of test files you
+   think are the relevant ones, and never scope a project-wide typecheck down to the
+   phase's packages. That narrowing is what lets a shared-type change pass the gate and
+   fail CI. Filling in the changed-file arguments a gate command expects is not
+   substitution — that's the gate working as written. If a written gate command is wrong
+   or won't run, stop, fix it in
    EXECUTION.md, tell the user, then run the corrected command. When a gate fails, quote
    only the failing portion of the output, not the full log.
    All must actually pass. An item may become `[~]` deferred only if environment-blocked
@@ -97,10 +104,19 @@ phase, but only under these rules:
    introduced must appear in `git show --stat` of a commit on the phase branch — a file
    described in a commit message but never `git add`ed has happened before.
 3. Update the STATUS block and checkboxes to reflect reality.
-4. Report to the user: phase complete, N commits, gate results — then one ask: **"push +
-   open PR?"** (target: the previous phase's branch if stacked and still unmerged, else the
+4. Report to the user: local gate passed, N commits — then one ask: **"push + open
+   PR?"** (target: the previous phase's branch if stacked and still unmerged, else the
    integration branch). The PR description must include the phase's **Review checklist**
    lane, so manual verification happens in the user's review before they merge.
+5. After the PR opens, resolve the CI gate item: watch the checks (`gh pr checks
+   --watch`, or the project's CI equivalent) — do not report the phase complete while CI
+   is running or red. If CI fails, fix it on the phase branch, push (pushing CI fixes to
+   the already-authorized PR needs no new ask), and re-watch. For a failure that is
+   demonstrably unrelated to the phase's diff (pre-existing on the base branch, or an
+   infra flake), re-run it once; if it persists, mark the CI item `[~]` with the evidence
+   of unrelatedness and surface it to the user — never chase unrelated red across
+   sessions. Only when CI is green (or `[~]` with evidence) check the item, update
+   STATUS, and report the phase complete.
 
 ## Step 4 — After the user merges
 
@@ -132,8 +148,10 @@ WIP commit at the next real commit.
 - Do not squash a phase's commits into one, and do not batch-check the checklist at the end.
 - Do not read PLAN.md in full on a routine start or resume — only the section a specific
   ambiguous item references.
-- Do not widen the agent gate beyond its written scope — except via a recorded
-  `(amended)` edit when the phase's actual diff exceeds the gate's coverage — and do not
-  silently substitute a different command when the written one fails to run.
+- Do not narrow the agent gate — no swapping a dependency-aware test command for
+  hand-picked test files, no scoping a project-wide typecheck to the phase's packages —
+  and do not silently substitute a different command when the written one fails to run.
+- Do not report a phase complete while its PR's CI is red or still running — the local
+  gate is the pre-PR smoke check; CI's full run is the authoritative verdict.
 - Do not edit, uncheck, or delete checked items when amending — corrections are new items.
 - Do not re-verify already-checked items when resuming — the checklist is the record.

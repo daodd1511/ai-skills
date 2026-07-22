@@ -17,7 +17,13 @@ The rulebook (state model, branch model, gate lanes, checkpoints) is `CLAUDE.md`
    Workflow" section. If it's absent, stop and tell the user — the state model
    (`done-with-debt`, `[~]`, checkpoints, parking) is defined there, and improvising
    substitute definitions would leave EXECUTION.md meaning different things to spec-phase
-   later. Offer to add the rulebook section first.
+   later. Offer to add it: read this skill's `references/rulebook.md` template, resolve its
+   placeholders against the project (`<SPECS_DIR>` = the specs root the skills glob, default
+   `specs`; `<INTEGRATION_BRANCH>` from `git branch`, e.g. `develop`/`main`;
+   `<SPECS_INDEX_CMD>` = the index-regen command, or delete the INDEX.md bullet if the
+   project has no such generator), drop the template's leading `<!-- TEMPLATE -->` comment,
+   and append the filled section to the project `CLAUDE.md`. Confirm the resolved values
+   with the user before writing. Do not proceed until the section exists.
 2. Read `specs/<feature-slug>/PLAN.md` in full. If it doesn't exist, stop and ask for the
    slug or tell the user to run `/grill-me` first.
 3. Check whether `specs/<feature-slug>/EXECUTION.md` already exists. If it does and has any
@@ -78,25 +84,40 @@ know where to start.
 
 Gates come in **two lanes**:
 
-- **Agent gate (hard)**: typecheck and tests scoped to the phase's changes — never the
-  whole repo; full-project gates bloat token/wall-clock cost with output about code the
-  phase never touched.
-  - *Typecheck*: only the files the phase changed or added. If the toolchain can't
-    soundly check single files (plain `tsc` loses project context), fall back to the
-    narrowest project scope that contains them (e.g. `tsc --noEmit -p <touched-package>`)
-    — never the monorepo root when only one package changed. Note: a change to a shared/
-    exported type can break files outside the changed set; if a phase touches shared
-    types, widen the typecheck scope to the packages that consume them and say so in the
-    gate item.
-  - *Tests*: only tests related to the changed files — prefer runner-native filters
-    (`jest --findRelatedTests <files>`, `vitest related <files>`) or explicit test-file
-    paths named in the gate item; not the full suite.
+- **Agent gate (hard)**: a pre-PR smoke check (typecheck, tests, build) plus **CI on the
+  PR as the authoritative full run**. The local commands catch the cheap majority before
+  a PR exists; they never replace CI, and the phase is not done until the PR's CI is
+  green (spec-phase enforces this). Local scoping goes by the *import graph*, never by
+  the list of edited files — a phase that edits a shared model breaks its consumers, and
+  consumers are not in the edited set.
+  - *Typecheck*: project-wide. Do not scope it. It has no runtime, no fixtures, no
+    services — it is the cheap check, and it is the one that catches a changed shared
+    type breaking every package that imports it. `tsc --noEmit` at the root (or the
+    project's own `typecheck` script) is the default; only narrow it if the repo has no
+    root-level typecheck at all, and say why in the gate item.
+  - *Tests*: dependency-aware selection, not hand-picked paths. Prefer a runner that
+    resolves the reverse-dependency closure itself — `jest --findRelatedTests <files>`,
+    `vitest related --run <files>` — so every test transitively importing the phase's
+    changes runs, including ones the phase never looked at. Write the command with the
+    changed-file arguments left for execution time (spec-phase fills them from the real
+    diff). If the runner has no related-tests mode, fall back to the narrowest *suite*
+    that contains the consumers (a package's or workspace's whole suite), not a list of
+    files — and note that it's a fallback. **Escalation**: if a phase's items touch
+    shared surfaces (exported types/models, shared schemas or utilities), write the full
+    local suite into that phase's gate instead — the import graph is least trustworthy
+    exactly there (fixtures, DI, serialized shapes carry no import edge), and that is
+    where consumer breakage originates.
   - *Build*: only if the phase's changes can plausibly break it (config, entry points,
-    codegen); skip it for leaf-level code changes already covered by typecheck.
+    codegen); skip it for leaf-level code already covered by typecheck.
+  - *CI*: end every phase's gate with `- [ ] CI green on the phase PR`. spec-phase
+    resolves it after opening the PR by watching checks (`gh pr checks --watch` or the
+    project's equivalent); red CI is the executing agent's to fix, on the phase branch,
+    before the phase can be marked done.
 
-  Write the concrete scoped command(s) into the gate item — an agent picking up the phase
-  must not have to decide the scope itself. Must pass before the PR is opened. Only write
-  items here the agent can actually run in this environment. If an agent-owed check is foreseeably
+  Write the concrete command(s) into the gate item — an agent picking up the phase must
+  not have to decide the scope itself. The local items must pass before the PR is opened;
+  the CI item resolves after. Only write items the agent can actually run in this
+  environment. If an agent-owed check is foreseeably
   environment-blocked (needs credentials, a live service), say so in the item now — at
   execution time it becomes `[~]` with substitute evidence, per the rulebook.
 - **Review checklist**: the manual scenarios (browser walkthroughs, visual checks) the
@@ -132,14 +153,17 @@ or off `<integration-branch>` if phase 1, or if sequential mode is opted in)
 - [ ] <item naming exact files/functions>
 
 **Agent gate (hard):**
-- [ ] <typecheck command scoped to this phase's changed/added files (or narrowest containing package)>
-- [ ] <test command filtered to tests related to the changed files — not the full suite>
+- [ ] <project-wide typecheck command — not scoped to this phase>
+- [ ] <dependency-aware test command, e.g. `vitest related --run <changed files>` — or
+  the full suite if this phase touches shared surfaces>
+- [ ] CI green on the phase PR
 
 **Review checklist (user, at PR review):**
 - [ ] <manual scenario>
 
-**On completion:** run agent gate, update STATUS + checkboxes, stop and ask before
-push/PR. Review checklist goes into the PR description.
+**On completion:** run local agent gate, update STATUS + checkboxes, stop and ask before
+push/PR; after the PR opens, watch CI and fix red before marking the phase done. Review
+checklist goes into the PR description.
 ```
 
 **Keep it terse.** EXECUTION.md is re-read at the start of every spec-phase session, so
@@ -169,7 +193,9 @@ skill — do not auto-start execution, starting a phase still needs the explicit
   confirmation.
 - Do not put agent-unrunnable manual checks in the agent gate — they belong in the review
   checklist lane.
-- Do not write repo-wide gate commands (`tsc --noEmit` at the root, the full test suite)
-  when the phase touches a subset — the gate's scope is part of the plan, and spec-phase
-  is bound to run it exactly as written.
 - Do not copy PLAN.md prose into EXECUTION.md — reference sections by name instead.
+- Do not scope the typecheck to the phase, and do not write a test gate as a hand-picked
+  list of test files. Both let a shared-model change ship with its consumers broken, which
+  surfaces as a red PR after the gate passed.
+- Do not omit the `CI green on the phase PR` gate item, and do not treat the local gate as
+  the final verdict — it is the smoke check; CI's full run is authoritative.
