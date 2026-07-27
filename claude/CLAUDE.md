@@ -19,6 +19,7 @@
 
 ## Tooling Preference
 * Prefer `rg` (ripgrep) over `grep` for searching code.
+* Prefer the installed `cwebp` CLI for encoding and optimizing WebP images.
 * Prefer local CLI utilities (like `gh` for GitHub) instead of raw curl API commands.
 * Rely on configured workspace linters or formatters instead of writing style rules.
 * Do not use git remote -v or similar commands to check remotes; rely on the repository's configured origin instead. Prefer checking with gh first.
