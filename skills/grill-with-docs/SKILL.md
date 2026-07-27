@@ -23,4 +23,5 @@ Decisions" section. If missing, offer to add it from the `domain-modeling` skill
 project, delete the template comment block, then append the section.
 
 Everything else about the grilling is unchanged: the output is still a
-`docs/specs/<feature>/PLAN.md`, ready for the `spec-plan` skill.
+`specs/<feature>/PLAN.md` (or wherever the project's `<SPECS_DIR>` resolves to — see
+`CLAUDE.md` → "Spec-Driven Execution Workflow"), ready for the `spec-plan` skill.
