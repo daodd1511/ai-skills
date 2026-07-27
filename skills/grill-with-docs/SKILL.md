@@ -16,5 +16,11 @@ durable residue as they surface:
   real trade-off, offer an ADR in `docs/adr/`. Feature-scoped decisions stay in
   the spec's `PLAN.md`, not an ADR (see `CLAUDE.md` → "Domain Model & Decisions").
 
+Verify the rulebook exists: project `CLAUDE.md` must contain a "Domain Model &
+Decisions" section. If missing, offer to add it from the `domain-modeling` skill's
+`references/rulebook.md` template (sibling skill dir:
+`../domain-modeling/references/rulebook.md`): resolve its placeholder against the
+project, delete the template comment block, then append the section.
+
 Everything else about the grilling is unchanged: the output is still a
 `docs/specs/<feature>/PLAN.md`, ready for the `spec-plan` skill.

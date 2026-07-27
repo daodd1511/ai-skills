@@ -39,6 +39,8 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 
 Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
 
+If the project's `CLAUDE.md` has no "Domain Model & Decisions" section describing these homes, offer to add one from [references/rulebook.md](./references/rulebook.md).
+
 ## During the session
 
 ### Challenge against the glossary
