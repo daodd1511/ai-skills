@@ -11,6 +11,7 @@
 !claude/CLAUDE.md
 !codex/skills/**
 !codex/AGENTS.md
+!skills/**
 
 # Defensive: never allow these even if a future rule accidentally matches them.
 *.sqlite
