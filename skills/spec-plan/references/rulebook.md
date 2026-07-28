@@ -9,9 +9,14 @@
                          If the project has no such generator, DELETE the INDEX.md bullet
                          in "State model" instead of filling this in.
   Keep the "## Spec-Driven Execution Workflow" heading verbatim — the skills grep for it.
+  Keep the `<!-- rulebook vN -->` marker verbatim too — it is how the skills detect that a
+  project's copy has fallen behind this template. Never hand-edit the number in a project.
+  "Capability baseline" is OPT-IN: keep the subsection only in projects adopting it, delete
+  it otherwise. Bump the version below whenever this template changes.
 -->
 
 ## Spec-Driven Execution Workflow
+<!-- rulebook v2 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation

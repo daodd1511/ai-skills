@@ -21,9 +21,18 @@ The rulebook (state model, branch model, gate lanes, checkpoints) is `CLAUDE.md`
    placeholders against the project (`<SPECS_DIR>` = the specs root the skills glob, default
    `specs`; `<INTEGRATION_BRANCH>` from `git branch`, e.g. `develop`/`main`;
    `<SPECS_INDEX_CMD>` = the index-regen command, or delete the INDEX.md bullet if the
-   project has no such generator), drop the template's leading `<!-- TEMPLATE -->` comment,
-   and append the filled section to the project `CLAUDE.md`. Confirm the resolved values
-   with the user before writing. Do not proceed until the section exists.
+   project has no such generator), keep the `<!-- rulebook vN -->` marker, decide with the
+   user whether to keep the opt-in "Capability baseline" subsection, drop the template's
+   leading `<!-- TEMPLATE -->` comment, and append the filled section to the project
+   `CLAUDE.md`. Confirm the resolved values with the user before writing. Do not proceed
+   until the section exists.
+   **Version check** (when the section does exist): compare the project's
+   `<!-- rulebook vN -->` marker against the template's. Missing, or lower → the project is
+   on a stale copy: say so, show what changed between the versions, and offer to upgrade the
+   section, preserving the project's resolved placeholders and its keep-or-drop choice on the
+   baseline subsection. Never bump the marker without applying the corresponding changes — a
+   number that lies is worse than an absent one. If the user declines, proceed on the old
+   rulebook and don't re-ask this session.
 2. Read `specs/<feature-slug>/PLAN.md` in full. If it doesn't exist, stop and ask for the
    slug or tell the user to run `/grill-me` first.
 3. Check whether `specs/<feature-slug>/EXECUTION.md` already exists. If it does and has any

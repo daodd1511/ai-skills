@@ -17,7 +17,10 @@ The rulebook (state model, branch model, gate lanes, checkpoints, parking) is `C
    `../spec-plan/references/rulebook.md`): resolve its placeholders against the project,
    drop the leading `<!-- TEMPLATE -->` comment, confirm the values with the user, and
    append the section to the project `CLAUDE.md`. Do not proceed until it exists — normally
-   `spec-plan` already added it, so a fresh project should run `/spec-plan` first.
+   `spec-plan` already added it, so a fresh project should run `/spec-plan` first. If the
+   section's `<!-- rulebook vN -->` marker is missing or below the template's, mention it
+   once and carry on — upgrading mid-spec would change the rules under an in-flight phase,
+   so it belongs to `spec-plan` at the start of the next one.
 2. Run `git status` and `git branch --show-current`. The branch name encodes spec+phase;
    the working tree and commit log encode progress. **This is the authoritative state.**
 3. Read `specs/<feature-slug>/EXECUTION.md` — its STATUS block and checklist (ask the user
