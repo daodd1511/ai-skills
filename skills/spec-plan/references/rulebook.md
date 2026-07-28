@@ -57,9 +57,13 @@ Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md
 - Starting a phase authorizes its commits — nothing else.
 - Gate pass → one ask: "push + open PR?". Remote actions are never bundled with anything
   else.
+- **Evidence before claims.** If you have not run the command in this message, you cannot
+  say it passes. This binds every status claim: tests pass ⇒ runner output with 0 failures;
+  build succeeds ⇒ exit 0; bug fixed ⇒ the original symptom retested; phase complete ⇒ the
+  gate actually run. A prior run, a partial run, or "should pass" is not evidence, and
+  checking a box is not running a command.
 - A phase is complete only when its **agent gate** (typecheck, tests, build) actually
-  passed — checking boxes doesn't substitute for running it — **and the phase PR's CI is
-  green**. The local gate is a pre-PR smoke check; CI's full run is authoritative, and red
+  passed **and the phase PR's CI is green**. The local gate is a pre-PR smoke check; CI's full run is authoritative, and red
   CI on a phase PR is the agent's to fix before the phase is done. Manual verification scenarios
   are the **review checklist**, listed in the PR description for the user to walk through
   before merging — they are the user's, not agent debt.

@@ -9,4 +9,6 @@ Ask the questions one at a time, waiting for feedback on each question before co
 
 If a *fact* can be found by exploring the environment (filesystem, tools, etc.), look it up rather than asking me. The *decisions*, though, are mine — put each one to me and wait for my answer.
 
+Before the detailed questions, check the scope: if this spans several independent pieces that could ship separately, say so first and propose the split. Refining the details of something that should have been three things wastes the whole interview.
+
 Do not act on it until I confirm we have reached a shared understanding.

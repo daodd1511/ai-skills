@@ -138,23 +138,31 @@ that the phase is parked and why. Never `git stash` — stashes are detached fro
 and invisible to a cold agent. Resume = checkout the branch, continue, squash-or-keep the
 WIP commit at the next real commit.
 
-## Do not
+## Common rationalizations
 
-- Do not resume from `HANDOFF.md` — state comes from git + STATUS only.
-- Do not silently start a new phase without a fresh explicit go-ahead.
-- Do not push, open a PR, or merge without a separate explicit confirmation, regardless of
-  how much of the phase's commit work was pre-authorized.
-- Do not wait for the previous phase's PR to merge before starting the next one unless
-  sequential mode was explicitly opted into for this spec — stacking is the default.
-- Do not mark `[~]` for anything that is merely tedious — deferral is for environment
-  blocks only, with evidence.
-- Do not squash a phase's commits into one, and do not batch-check the checklist at the end.
-- Do not read PLAN.md in full on a routine start or resume — only the section a specific
-  ambiguous item references.
-- Do not narrow the agent gate — no swapping a dependency-aware test command for
-  hand-picked test files, no scoping a project-wide typecheck to the phase's packages —
-  and do not silently substitute a different command when the written one fails to run.
-- Do not report a phase complete while its PR's CI is red or still running — the local
-  gate is the pre-PR smoke check; CI's full run is the authoritative verdict.
-- Do not edit, uncheck, or delete checked items when amending — corrections are new items.
-- Do not re-verify already-checked items when resuming — the checklist is the record.
+Every rule below gets broken the same way: a plausible sentence arrives first, and the
+violation follows from it. The excuse is the tell.
+
+| Excuse | Reality |
+|--------|---------|
+| "HANDOFF.md says where I left off" | It's advisory prose from a past session. State is git + STATUS, and only those. |
+| "The user clearly wants the next phase, they said continue the spec" | Starting a phase needs a fresh explicit go-ahead. Resuming an in-progress one doesn't — know which you're doing. |
+| "The phase is done, pushing is implied" | Starting a phase authorized commits and nothing else. Push, PR, and merge are each a separate ask, every time. |
+| "I should wait for phase 1's PR to merge before starting phase 2" | Stacking is the default: base off the previous phase's branch and keep going. Waiting is sequential mode, and that is opt-in per spec. |
+| "This check is too tedious to run, I'll mark it deferred" | `[~]` is for environment blocks — missing tool, missing credentials — with substitute evidence. Effort is not a block. |
+| "Cleaner history if I squash the phase into one commit" | Commit at logical sub-steps, and check items off as they land. Both exist so a cold agent can see where the work actually stopped. |
+| "I'll re-read PLAN.md to rebuild context" | Checklist items name their own files. Open PLAN.md only for the section a specific ambiguous item points at — a full read is a recurring token cost for nothing. |
+| "The gate's test command is broader than this phase needs" | That breadth is the point: a shared-type change breaks consumers the edited-file list never mentions. Never narrow a project-wide typecheck, never swap dependency-aware selection for hand-picked files. |
+| "The written gate command won't run, I'll use a close equivalent" | Stop, fix the command in EXECUTION.md, tell the user, then run the corrected one. A silent substitution means the gate that passed is not the gate that was agreed. |
+| "CI is probably fine, the local gate passed" | The local gate is the pre-PR smoke check. CI's full run is the verdict, and a phase is not complete while CI is red or still running. |
+| "This checked item was done wrong, I'll fix it in place" | Checked items are immutable. Corrections are new `(amended)` items — the record of what happened must survive being wrong. |
+| "Let me re-verify the earlier items to be safe" | The checklist is the record. Re-opening checked work burns context to re-learn what is already written down. |
+
+## Model choice
+
+Stay on the strong model for anything requiring judgment: interpreting an ambiguous item,
+diagnosing a gate failure, deciding whether an amendment is new scope. Dropping to a cheap
+tier is worth it only for phases that are pure transcription — the plan names every file and
+every change, and the work is typing. Weigh it by **turns, not token price**: a cheap model
+that needs three attempts at a multi-step phase costs more than a strong one that needs one,
+and it burns your context on the retries.

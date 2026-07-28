@@ -91,6 +91,19 @@ sections rather than re-deriving them. Vague items ("update the backend") are no
 acceptable; an agent picking up the phase cold should not have to re-read all of PLAN.md to
 know where to start.
 
+**Placeholders are plan failures, not shorthand.** Scan the finished checklist for these and
+fix every hit — each one defers a decision to an agent with less context than you have now:
+`TBD` / `TODO` / "decide at implementation time"; "add appropriate error handling" /
+"add validation" / "handle edge cases"; "update the tests" with no named test file; "same as
+phase N" (name the files again — phases are read out of order on resume); any type,
+function, or table referenced by no item that creates it.
+
+**Interfaces.** Each phase declares what it consumes from earlier phases and what later
+phases build on — exact exported names and signatures, not descriptions. Phases are stacked
+and executed in separate sessions, so phase 3's agent has no cheap way to learn what phase 2
+actually named things; without this it guesses, and the guess surfaces as a red typecheck
+two phases later. Omit either line when it's genuinely empty.
+
 Gates come in **two lanes**:
 
 - **Agent gate (hard)**: a pre-PR smoke check (typecheck, tests, build) plus **CI on the
@@ -158,6 +171,9 @@ Branch: `<feature-slug>/phase-<n>-<short-desc>` (off `<previous-phase-branch>`, 
 or off `<integration-branch>` if phase 1, or if sequential mode is opted in)
 
 <one line: why this is one phase — the dependency boundary it sits on>
+
+Consumes: `<exact names/signatures this phase relies on from earlier phases>`
+Produces: `<exact names/signatures later phases build on>`
 
 - [ ] <item naming exact files/functions>
 
