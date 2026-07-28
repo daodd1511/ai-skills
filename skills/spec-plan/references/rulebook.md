@@ -72,5 +72,28 @@ Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md
   the user's go-ahead: a `WIP: parked <date>` commit on the phase branch plus a STATUS note
   (never `git stash` — stashes are invisible to a cold agent and easy to orphan).
 
+### Capability baseline
+<!-- OPT-IN: delete this whole subsection in projects that don't maintain a baseline. -->
+- `<SPECS_DIR>/capabilities/<area>.md` is the **current-state truth**: what the system does
+  today, as `## Requirement: <title>` blocks with `### Scenario:` / `**WHEN**` / `**THEN**`
+  steps. One file per capability area; split past ~300 lines. **The requirement title is the
+  primary key** — entries are addressed by exact title, never by position.
+- Every requirement carries a provenance line: `Origin: delta ← <SPECS_DIR>/<feature>`,
+  `Origin: backfill (test: <path>)`, or `Origin: backfill (user-confirmed)`.
+- PLAN.md ends with a `## Spec Delta` section naming its capability and its entries:
+  `### ADDED|MODIFIED|REMOVED Requirement: <title>`. **`MODIFIED` carries the complete
+  post-change requirement text, not a diff** — applying is then a title-matched block swap
+  a script can do, with no model judgment in the write path.
+- The baseline is **written only from a merged delta or an evidence-backed backfill**, never
+  hand-edited and never inferred from a code diff. It is applied post-merge by the
+  `spec-archive` skill, which stops rather than reconciling a stale delta.
+- **Lazy backfill (brownfield).** Existing behaviour enters the baseline only when a feature
+  touches it — triggered when a delta needs a `MODIFIED` entry the baseline doesn't have.
+  Backfill during the grill, by evidence class, never by the model's confidence:
+  behaviour pinned by a **passing test** → transcribe it; **readable from code but untested**
+  → draft it and get the user's confirmation; **requires inferring intent** → out of scope,
+  leave it out. Never a bulk pass over the codebase.
+
 Procedure lives in the skills — planning in the `spec-plan` skill, execution and resume in
-the `spec-phase` skill — invoke the relevant one rather than re-deriving it.
+the `spec-phase` skill, baseline application in the `spec-archive` skill — invoke the
+relevant one rather than re-deriving it.

@@ -84,6 +84,14 @@ phase, but only under these rules:
   a stale list the plan guessed. The runner resolves consumers from there.
 - **Checked items are immutable**: never edit, uncheck, or delete a checked item. A
   correction to already-done work is a new `(amended)` item.
+- **User-visible behaviour changes amend the delta too** (baseline projects only): if an
+  amended item changes what the system does for a user, update PLAN.md's `## Spec Delta` in
+  the same commit. Skip this and the delta records what was planned while the code does
+  something else — and `spec-archive` will refuse to reconcile the difference later, exactly
+  when the context to resolve it is gone.
+- **Interfaces are part of the contract**: if a phase ends up exporting something different
+  from its `Produces:` line, correct that line before completing the phase. Later phases are
+  planned against it.
 - Restructuring phases (splitting, reordering, adding one) is spec-plan's job — stop and
   ask rather than doing it here.
 
@@ -129,6 +137,10 @@ phase, but only under these rules:
    branch onto the integration branch now — don't wait for it to become the active phase.
 4. Update STATUS (phase → `done`, or `done-with-debt` if debt remains). Then, if phases
    remain, ask whether to start the next one (Step 2).
+5. If that was the **final** phase and the project keeps a capability baseline, offer the
+   `spec-archive` skill — it folds PLAN.md's `## Spec Delta` into
+   `specs/capabilities/` and archives the feature. Offer, don't run it: it writes the
+   project's source of truth. Do not apply the delta yourself here.
 
 ## Step 5 — Parking (mid-phase stop)
 

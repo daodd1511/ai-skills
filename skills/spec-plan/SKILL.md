@@ -63,6 +63,15 @@ worse, an unreviewed assumption shipped in a migration.
   wording) — proceed and note the judgment call inline in the checklist item so it's visible
   at execution time, don't stop to ask.
 
+**If the project keeps a capability baseline** (rulebook → "Capability baseline"), validate
+PLAN.md's `## Spec Delta` against it before phasing: every `ADDED` title must be free in the
+target capability file, every `MODIFIED`/`REMOVED` title must exist there. A colliding
+`ADDED` usually means this feature contradicts an earlier one — stop and put it to the user;
+that contradiction is invisible anywhere else. A `MODIFIED` with no entry means the backfill
+was skipped during the grill — stop and run it (evidence classes per rulebook), don't invent
+the missing requirement. Derive review-checklist items from the delta's scenarios: a
+`WHEN/THEN` pair converts to a manual verification step almost verbatim.
+
 ## Step 2 — Derive phase boundaries
 
 Phases split along dependency layers, not arbitrary size. Common shape for a full-stack
@@ -224,3 +233,5 @@ skill — do not auto-start execution, starting a phase still needs the explicit
   surfaces as a red PR after the gate passed.
 - Do not omit the `CI green on the phase PR` gate item, and do not treat the local gate as
   the final verdict — it is the smoke check; CI's full run is authoritative.
+- Do not resolve a `MODIFIED` with no baseline entry by writing the requirement yourself —
+  that is the backfill, and it needs test evidence or the user's confirmation.

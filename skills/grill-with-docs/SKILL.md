@@ -22,6 +22,28 @@ Decisions" section. If missing, offer to add it from the `domain-modeling` skill
 `../domain-modeling/references/rulebook.md`): resolve its placeholder against the
 project, delete the template comment block, then append the section.
 
+## Capability baseline
+
+Only when the project's rulebook keeps the opt-in "Capability baseline" subsection —
+otherwise skip this section entirely.
+
+- **Read first.** Before the interview, read the capability files for the areas this feature
+  touches (`specs/capabilities/<area>.md`). They state what the system already guarantees;
+  grilling settled behaviour back into existence wastes the session.
+- **Close with the delta.** PLAN.md ends with `## Spec Delta`: the capability it targets and
+  its `### ADDED|MODIFIED|REMOVED Requirement: <title>` entries, requirements as `SHALL`
+  statements with `WHEN`/`THEN` scenarios. `MODIFIED` carries the **complete** post-change
+  requirement, never a diff — `spec-archive` applies it as a title-matched block swap.
+  `REMOVED` says what supersedes it.
+- **Backfill on contact.** When a `MODIFIED` targets behaviour the baseline doesn't describe
+  yet, backfill it here, in the interview — by evidence, never by how confident you feel:
+  a **passing test** pins the behaviour, so transcribe it (`Origin: backfill (test: <path>)`);
+  **readable in code but untested**, draft it and get the user's explicit confirmation
+  (`Origin: backfill (user-confirmed)`); **needs inferring intent**, leave it out. Backfill
+  only what this feature touches — never a sweep through the codebase. A confidently written
+  wrong requirement is worse than an absent one: it looks authoritative and later grills will
+  trust it instead of reading the code.
+
 Everything else about the grilling is unchanged: the output is still a
 `specs/<feature>/PLAN.md` (or wherever the project's `<SPECS_DIR>` resolves to — see
 `CLAUDE.md` → "Spec-Driven Execution Workflow"), ready for the `spec-plan` skill.
