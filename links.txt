@@ -9,6 +9,7 @@ skills/react-frontend-developer -> ~/.claude/skills/react-frontend-developer
 skills/vue-frontend-developer -> ~/.claude/skills/vue-frontend-developer
 skills/spec-plan -> ~/.claude/skills/spec-plan
 skills/spec-phase -> ~/.claude/skills/spec-phase
+skills/spec-archive -> ~/.claude/skills/spec-archive
 skills/domain-modeling -> ~/.claude/skills/domain-modeling
 skills/grill-with-docs -> ~/.claude/skills/grill-with-docs
 skills/grill-me -> ~/.agents/skills/grill-me
@@ -20,6 +21,7 @@ skills/react-frontend-developer -> ~/.agents/skills/react-frontend-developer
 skills/vue-frontend-developer -> ~/.agents/skills/vue-frontend-developer
 skills/spec-plan -> ~/.agents/skills/spec-plan
 skills/spec-phase -> ~/.agents/skills/spec-phase
+skills/spec-archive -> ~/.agents/skills/spec-archive
 skills/domain-modeling -> ~/.agents/skills/domain-modeling
 skills/grill-with-docs -> ~/.agents/skills/grill-with-docs
 claude/agents/code-locator.md -> ~/.claude/agents/code-locator.md
