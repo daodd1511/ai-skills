@@ -1,15 +1,23 @@
 <!--
-  TEMPLATE — domain-model rulebook section. This is the canonical source the
-  domain-modeling and grill-with-docs skills copy from when a project has no
-  rulebook section yet. Fill the placeholder, then DELETE this comment block
-  before appending the section to the project's CLAUDE.md:
+  TEMPLATE — domain-model rulebook. Canonical source for a project's
+  docs/DOMAIN-RULEBOOK.md. It lives in its own file, NOT in CLAUDE.md: the domain-modeling
+  and grill-with-docs skills read it on demand when they run, so sessions doing ordinary work
+  don't carry it. CLAUDE.md gets the short stub in `claude-md-stub.md` instead.
+
+  Fill the placeholder, then DELETE this comment block before writing the file:
     <SPECS_DIR>   specs root the spec-plan/spec-phase skills use (e.g. `docs/specs`).
                   If the project has no spec workflow, replace the third bullet's
                   path with wherever feature-scoped decisions should live instead.
-  Keep the "## Domain Model & Decisions" heading verbatim — the skills grep for it.
+  Keep the `<!-- domain-rulebook vN -->` marker verbatim — it is how the skills detect that a
+  project's copy has fallen behind this template. Never hand-edit the number in a project.
+  Bump the version here AND in claude-md-stub.md whenever either changes.
+
+  The stub repeats the "use the canonical terms" rule on purpose — it binds anyone writing
+  code or copy, not just this skill. Do not "deduplicate" it out of either place.
 -->
 
-## Domain Model & Decisions
+# Domain Model & Decisions
+<!-- domain-rulebook v1 -->
 
 Three homes for terminology and decisions — keep them from bleeding into each
 other. The `domain-modeling` skill (and `grill-with-docs`, which folds it into a

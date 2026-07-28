@@ -1,28 +1,38 @@
 <!--
-  TEMPLATE — spec-workflow rulebook. This is the canonical source both the spec-plan and
-  spec-phase skills copy from when a project has no rulebook yet. Fill the placeholders,
-  then DELETE this comment block before appending the section to the project's CLAUDE.md:
+  TEMPLATE — spec-workflow rulebook. Canonical source for a project's
+  <SPECS_DIR>/RULEBOOK.md. It lives in its own file, NOT in CLAUDE.md: the spec skills read
+  it on demand when they run, so a project that isn't doing spec work this session pays
+  nothing for it. CLAUDE.md gets the short stub in `claude-md-stub.md` instead.
+
+  Fill the placeholders, then DELETE this comment block before writing the file:
     <SPECS_DIR>          specs root the spec skills use — must match what they glob for
                          (they hardcode `specs`; only change if you also change the skills)
     <INTEGRATION_BRANCH> the project's integration branch (e.g. `develop` or `main`)
     <SPECS_INDEX_CMD>    command that regenerates <SPECS_DIR>/INDEX.md (e.g. `pnpm specs:index`).
                          If the project has no such generator, DELETE the INDEX.md bullet
                          in "State model" instead of filling this in.
-  Keep the "## Spec-Driven Execution Workflow" heading verbatim — the skills grep for it.
-  Keep the `<!-- rulebook vN -->` marker verbatim too — it is how the skills detect that a
+  Keep the `<!-- rulebook vN -->` marker verbatim — it is how the skills detect that a
   project's copy has fallen behind this template. Never hand-edit the number in a project.
   "Capability baseline" is OPT-IN: keep the subsection only in projects adopting it, delete
-  it otherwise. Bump the version below whenever this template changes.
+  it otherwise. Bump the version here AND in claude-md-stub.md whenever either changes.
+
+  The stub repeats three invariants from this file on purpose — they must bind agents that
+  never trigger a spec skill. Do not "deduplicate" them out of either place.
 -->
 
-## Spec-Driven Execution Workflow
-<!-- rulebook v2 -->
+# Spec-Driven Execution Workflow
+<!-- rulebook v3 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation
-(via the `spec-phase` skill). These rules bind even when neither skill is invoked.
+(via the `spec-phase` skill).
 
-### State model
+This is the full rulebook. The spec skills read it when they run; it is deliberately kept
+out of `CLAUDE.md` so sessions doing ordinary work don't carry it. The few invariants that
+must bind agents who never trigger a spec skill live in `CLAUDE.md` → "Spec-Driven
+Execution Workflow", which points here for everything else.
+
+## State model
 - **Git is the authoritative state store**: branch name encodes spec+phase
   (`<feature-slug>/phase-<n>-<desc>`), commits encode progress. Each `EXECUTION.md` opens
   with a **STATUS block** (current phase, per-phase state, verification debt) — the only
@@ -40,7 +50,7 @@ Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md
   loudly on drift. On conflict, git and STATUS win — INDEX.md is advisory, like `HANDOFF.md`.
   <!-- DELETE this bullet if the project has no specs-index generator. -->
 
-### Branch model — stacked by default
+## Branch model — stacked by default
 - **Default: stacked.** Each phase branches off the **previous phase's branch** (phase 1
   off the integration branch, currently `<INTEGRATION_BRANCH>`; resolve at plan time, never
   hardcode). Push → PR to the previous phase's branch (or to the integration branch if the
@@ -53,7 +63,7 @@ Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md
   integration branch.
 - After a phase's PR merges, ask before deleting the merged phase branch (local + remote).
 
-### Checkpoints
+## Checkpoints
 - Starting a phase authorizes its commits — nothing else.
 - Gate pass → one ask: "push + open PR?". Remote actions are never bundled with anything
   else.
@@ -72,7 +82,7 @@ Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md
   the user's go-ahead: a `WIP: parked <date>` commit on the phase branch plus a STATUS note
   (never `git stash` — stashes are invisible to a cold agent and easy to orphan).
 
-### Capability baseline
+## Capability baseline
 <!-- OPT-IN: delete this whole subsection in projects that don't maintain a baseline. -->
 - `<SPECS_DIR>/capabilities/<area>.md` is the **current-state truth**: what the system does
   today, as `## Requirement: <title>` blocks with `### Scenario:` / `**WHEN**` / `**THEN**`

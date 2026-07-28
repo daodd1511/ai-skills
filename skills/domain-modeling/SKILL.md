@@ -39,7 +39,7 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 
 Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
 
-If the project's `CLAUDE.md` has no "Domain Model & Decisions" section describing these homes, offer to add one from [references/rulebook.md](./references/rulebook.md).
+The rulebook describing these homes is `docs/DOMAIN-RULEBOOK.md` — read it before recording anything. If it's absent, check `CLAUDE.md`: an inline "Domain Model & Decisions" section with no `<!-- domain-rulebook vN -->` marker is a pre-split project — offer to move its body to `docs/DOMAIN-RULEBOOK.md` and replace the section with [references/claude-md-stub.md](./references/claude-md-stub.md), so it stops loading in every session. If neither exists, offer to create both from [references/rulebook.md](./references/rulebook.md) and the stub. If the marker is below the template's, say so and offer the upgrade — rulebook and stub move together.
 
 ## During the session
 

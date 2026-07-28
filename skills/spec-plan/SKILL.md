@@ -8,31 +8,44 @@ Produces `specs/<feature-slug>/EXECUTION.md` from `specs/<feature-slug>/PLAN.md`
 only plans phases and writes the checklist file — it does not write code. Once EXECUTION.md
 exists, hand off to the `spec-phase` skill to actually run a phase.
 
-The rulebook (state model, branch model, gate lanes, checkpoints) is `CLAUDE.md` →
-"Spec-Driven Execution Workflow" — this skill implements it, not restates it.
+The rulebook (state model, branch model, gate lanes, checkpoints) is `specs/RULEBOOK.md` —
+this skill implements it, not restates it. Read it at Step 0; it is not in context by
+default. `CLAUDE.md` carries only a stub pointing at it.
 
 ## Step 0 — Load state
 
-1. Verify the rulebook exists: project `CLAUDE.md` must contain a "Spec-Driven Execution
-   Workflow" section. If it's absent, stop and tell the user — the state model
-   (`done-with-debt`, `[~]`, checkpoints, parking) is defined there, and improvising
-   substitute definitions would leave EXECUTION.md meaning different things to spec-phase
-   later. Offer to add it: read this skill's `references/rulebook.md` template, resolve its
-   placeholders against the project (`<SPECS_DIR>` = the specs root the skills glob, default
-   `specs`; `<INTEGRATION_BRANCH>` from `git branch`, e.g. `develop`/`main`;
-   `<SPECS_INDEX_CMD>` = the index-regen command, or delete the INDEX.md bullet if the
-   project has no such generator), keep the `<!-- rulebook vN -->` marker, decide with the
-   user whether to keep the opt-in "Capability baseline" subsection, drop the template's
-   leading `<!-- TEMPLATE -->` comment, and append the filled section to the project
-   `CLAUDE.md`. Confirm the resolved values with the user before writing. Do not proceed
-   until the section exists.
-   **Version check** (when the section does exist): compare the project's
-   `<!-- rulebook vN -->` marker against the template's. Missing, or lower → the project is
-   on a stale copy: say so, show what changed between the versions, and offer to upgrade the
-   section, preserving the project's resolved placeholders and its keep-or-drop choice on the
-   baseline subsection. Never bump the marker without applying the corresponding changes — a
-   number that lies is worse than an absent one. If the user declines, proceed on the old
-   rulebook and don't re-ask this session.
+1. **Locate and read the rulebook**: `specs/RULEBOOK.md` (or the project's `<SPECS_DIR>`).
+   Read it — the state model (`done-with-debt`, `[~]`, checkpoints, parking) is defined
+   there, and improvising substitute definitions would leave EXECUTION.md meaning different
+   things to spec-phase later. Three cases when it's absent:
+
+   - **CLAUDE.md has an inline "Spec-Driven Execution Workflow" section with a rulebook
+     marker below v3** — a pre-split project. Offer to migrate: move that section's body to
+     `specs/RULEBOOK.md` (promoting its `###` headings to `##`), replace the section in
+     CLAUDE.md with this skill's `references/claude-md-stub.md`, and apply any version
+     upgrade in the same pass. The project keeps its resolved placeholders and its
+     keep-or-drop choice on the "Capability baseline" subsection. Say what this buys — the
+     rulebook stops loading in every session and is read only when a spec skill runs.
+   - **CLAUDE.md has such a section at v3 or above** — the stub is missing its file. Ask
+     before assuming; do not silently regenerate a rulebook the project may have moved.
+   - **Neither exists** — fresh setup. Read `references/rulebook.md`, resolve its
+     placeholders (`<SPECS_DIR>` = the specs root the skills glob, default `specs`;
+     `<INTEGRATION_BRANCH>` from `git branch`, e.g. `develop`/`main`; `<SPECS_INDEX_CMD>` =
+     the index-regen command, or delete the INDEX.md bullet if the project has no such
+     generator), decide with the user whether to keep the opt-in "Capability baseline"
+     subsection, drop the leading `<!-- TEMPLATE -->` comment, and write
+     `specs/RULEBOOK.md`. Then do the same with `references/claude-md-stub.md` and append it
+     to `CLAUDE.md`. Confirm the resolved values with the user before writing either.
+
+   Do not proceed until the rulebook exists and you have read it.
+
+   **Version check** (when it does exist): compare its `<!-- rulebook vN -->` marker against
+   the template's. Missing, or lower → the project is on a stale copy: say so, show what
+   changed between the versions, and offer to upgrade both the rulebook and the CLAUDE.md
+   stub together — they share a version and drift apart silently otherwise. Never bump a
+   marker without applying the corresponding changes; a number that lies is worse than an
+   absent one. If the user declines, proceed on the old rulebook and don't re-ask this
+   session.
 2. Read `specs/<feature-slug>/PLAN.md` in full. If it doesn't exist, stop and ask for the
    slug or tell the user to run `/grill-me` first.
 3. Check whether `specs/<feature-slug>/EXECUTION.md` already exists. If it does and has any
@@ -44,9 +57,9 @@ The rulebook (state model, branch model, gate lanes, checkpoints) is `CLAUDE.md`
    read the other EXECUTION.md files in full. If another spec has a phase in `in-progress`
    (or uncommitted work on its branch), stop — don't plan a new spec on top of one
    mid-flight; the user must finish or park it first.
-5. Resolve the **integration branch** (check `CLAUDE.md`, then `git branch` for the
-   convention in use — currently `develop`). Name it explicitly in EXECUTION.md; never
-   write a hardcoded assumption.
+5. Resolve the **integration branch** (the rulebook's branch model names it; otherwise
+   `git branch` for the convention in use). Name it explicitly in EXECUTION.md; never write
+   a hardcoded assumption.
 
 ## Step 1 — Surface ambiguity before phasing anything
 
@@ -163,7 +176,7 @@ they predate v2 and carry stale conventions):
 ```markdown
 # <Feature> — Execution Plan
 
-Spec: [PLAN.md](PLAN.md). Rulebook: `CLAUDE.md` → "Spec-Driven Execution Workflow".
+Spec: [PLAN.md](PLAN.md). Rulebook: `specs/RULEBOOK.md`.
 Integration branch: `<resolved-branch>`. Branch model: <stacked (default) | sequential
 (opted in)>.
 

@@ -14,13 +14,12 @@ durable residue as they surface:
   implementation detail).
 - When the interview lands a decision that is app-wide, hard to reverse, and a
   real trade-off, offer an ADR in `docs/adr/`. Feature-scoped decisions stay in
-  the spec's `PLAN.md`, not an ADR (see `CLAUDE.md` → "Domain Model & Decisions").
+  the spec's `PLAN.md`, not an ADR (see `docs/DOMAIN-RULEBOOK.md`).
 
-Verify the rulebook exists: project `CLAUDE.md` must contain a "Domain Model &
-Decisions" section. If missing, offer to add it from the `domain-modeling` skill's
-`references/rulebook.md` template (sibling skill dir:
-`../domain-modeling/references/rulebook.md`): resolve its placeholder against the
-project, delete the template comment block, then append the section.
+Verify `docs/DOMAIN-RULEBOOK.md` exists and read it — it is not in context by default,
+and `CLAUDE.md` carries only a pointer stub. If it's absent, follow the `domain-modeling`
+skill's setup: it handles fresh creation and migration from a pre-split inline section
+(sibling skill dir: `../domain-modeling/`).
 
 ## Capability baseline
 
@@ -46,4 +45,4 @@ otherwise skip this section entirely.
 
 Everything else about the grilling is unchanged: the output is still a
 `specs/<feature>/PLAN.md` (or wherever the project's `<SPECS_DIR>` resolves to — see
-`CLAUDE.md` → "Spec-Driven Execution Workflow"), ready for the `spec-plan` skill.
+`specs/RULEBOOK.md`), ready for the `spec-plan` skill.

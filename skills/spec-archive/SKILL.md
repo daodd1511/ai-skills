@@ -6,8 +6,8 @@ argument-hint: "<feature-slug> — every phase must be merged first"
 
 Applies `specs/<feature-slug>/PLAN.md` → `## Spec Delta` to `specs/capabilities/`, then
 archives the feature. The rulebook (baseline format, delta verbs, provenance, backfill
-evidence classes) is `CLAUDE.md` → "Spec-Driven Execution Workflow" → "Capability baseline"
-— this skill implements it, not restates it.
+evidence classes) is `specs/RULEBOOK.md` → "Capability baseline" — this skill implements it,
+not restates it. Read it first; it is not in context by default.
 
 This skill writes the project's source of truth. It is mechanical by design: the model
 authors nothing here, it only moves text the delta already contains.

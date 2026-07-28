@@ -5,22 +5,20 @@ argument-hint: "<feature-slug> [phase-n] — omit phase-n to auto-detect where t
 ---
 
 Drives execution of `specs/<feature-slug>/PLAN.md` + `specs/<feature-slug>/EXECUTION.md`.
-The rulebook (state model, branch model, gate lanes, checkpoints, parking) is `CLAUDE.md` →
-"Spec-Driven Execution Workflow" — this skill is the procedure that implements it.
+The rulebook (state model, branch model, gate lanes, checkpoints, parking) is
+`specs/RULEBOOK.md` — this skill is the procedure that implements it. Read it at Step 0; it
+is not in context by default, and `CLAUDE.md`'s stub is a summary, not a substitute.
 
 ## Step 0 — Locate state from git first
 
-1. Verify the rulebook exists: project `CLAUDE.md` must contain a "Spec-Driven Execution
-   Workflow" section. If it's absent, stop and tell the user — do not improvise meanings
-   for `done-with-debt`, `[~]`, or the checkpoint rules; they are defined there. Offer to
-   add it from the `spec-plan` skill's `references/rulebook.md` template (sibling skill dir:
-   `../spec-plan/references/rulebook.md`): resolve its placeholders against the project,
-   drop the leading `<!-- TEMPLATE -->` comment, confirm the values with the user, and
-   append the section to the project `CLAUDE.md`. Do not proceed until it exists — normally
-   `spec-plan` already added it, so a fresh project should run `/spec-plan` first. If the
-   section's `<!-- rulebook vN -->` marker is missing or below the template's, mention it
-   once and carry on — upgrading mid-spec would change the rules under an in-flight phase,
-   so it belongs to `spec-plan` at the start of the next one.
+1. **Read `specs/RULEBOOK.md`** (or the project's `<SPECS_DIR>`). If it's absent, stop and
+   tell the user — do not improvise meanings for `done-with-debt`, `[~]`, or the checkpoint
+   rules from the CLAUDE.md stub; they are defined in the rulebook only. Setup and migration
+   from a pre-v3 inline rulebook are `spec-plan`'s Step 0, so a project without the file
+   should run `/spec-plan` first. If the rulebook's `<!-- rulebook vN -->` marker is below
+   the template's (`../spec-plan/references/rulebook.md`), mention it once and carry on —
+   upgrading mid-spec would change the rules under an in-flight phase, so it belongs to
+   `spec-plan` at the start of the next one.
 2. Run `git status` and `git branch --show-current`. The branch name encodes spec+phase;
    the working tree and commit log encode progress. **This is the authoritative state.**
 3. Read `specs/<feature-slug>/EXECUTION.md` — its STATUS block and checklist (ask the user
