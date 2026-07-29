@@ -2,16 +2,53 @@
 name: terse-commit
 description: >
   Ultra-compressed commit message generator. Cuts noise from commit messages while preserving
-  intent and reasoning. Conventional Commits subject (`type(scope): summary`), no AI
-  attribution. Subject short and concise, body only when "why" isn't obvious. Flags unrelated
+  intent and reasoning. Two modes by repo path: Conventional Commits subject
+  (`type(scope): summary`) for personal repos, company convention with a trailing Jira ID
+  for repos under `~/dev/work/`. No AI attribution. Subject short and concise, body only when "why" isn't obvious. Flags unrelated
   changes for splitting into separate commits. Use when user says "write a commit",
   "commit message", "generate commit", "/commit", or invokes /terse-commit. Auto-triggers
   when staging changes.
 ---
 
-Write commit messages terse and exact. Conventional Commits subject, imperative summary. No fluff. Why over what.
+Write commit messages terse and exact. No fluff. Why over what.
 
-## Rules
+## Pick the mode first
+
+Resolve the repo root, then choose:
+
+```
+git rev-parse --show-toplevel
+```
+
+- Path under `~/dev/work/` → **Work mode**. Company rules below override everything
+  in Personal mode that contradicts them.
+- Anything else (including `~/dev/personal/`) → **Personal mode**: Conventional Commits,
+  the rules in this file as written.
+
+State which mode you used in one short line before the message.
+
+## Work mode
+
+Company commit convention. No Conventional Commits prefix, no scope.
+
+- Subject: short, concise, imperative mood, **first word capitalized**, no trailing period.
+- Append the Jira task ID at the end of the subject. Read it from the branch name:
+  ```
+  git rev-parse --abbrev-ref HEAD | grep -oE '[A-Z]+-[0-9]+'
+  ```
+  Example: `Add View in Payroll button to shift discrepancy dialog CG-2267`
+- If the branch has no Jira ID, ask for it rather than guessing or omitting it.
+  If the user says there is none, write the subject without one.
+- Split unrelated changes into separate, meaningful commits — do not lump them into one.
+- Never add AI attribution or `Co-authored-by` for the agent.
+
+Everything else carries over from Personal mode: body only when the *why* isn't obvious,
+wrap at 72, bullets `-`, no "This commit does X" / "I" / "we", no emoji.
+
+Existing history still wins over the letter of these rules — check `git log --oneline -20`
+and match the repo before writing.
+
+## Personal mode rules
 
 **Subject line:**
 - `<type>(<scope>): <summary>` — scope optional, omit it when the diff is repo-wide or
@@ -48,6 +85,11 @@ repo's style.
 - Emoji (unless project convention requires)
 
 ## Examples
+
+Work mode — branch `feature/CG-2267-payroll-link`, adds a button to a dialog
+- ❌ `feat(payroll): add view in payroll button` — Conventional prefix, wrong repo
+- ❌ `Add View in Payroll button to shift discrepancy dialog.` — missing Jira ID, trailing period
+- ✅ `Add View in Payroll button to shift discrepancy dialog CG-2267`
 
 Diff: new endpoint for user profile with body explaining the why
 - ❌ "feat: add a new endpoint to get user profile information from the database"
