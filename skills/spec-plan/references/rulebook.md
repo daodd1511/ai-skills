@@ -1,8 +1,11 @@
 <!--
   TEMPLATE — spec-workflow rulebook. Canonical source for a project's
-  <SPECS_DIR>/RULEBOOK.md. It lives in its own file, NOT in CLAUDE.md: the spec skills read
-  it on demand when they run, so a project that isn't doing spec work this session pays
-  nothing for it. CLAUDE.md gets the short stub in `claude-md-stub.md` instead.
+  <SPECS_DIR>/RULEBOOK.md, and the ONLY file this workflow adds to a project. It lives in
+  its own file, NOT in CLAUDE.md: the spec skills read it on demand when they run, so a
+  project that isn't doing spec work this session pays nothing for it, and a shared repo's
+  CLAUDE.md stays untouched. Nothing is appended to CLAUDE.md, project or global — the one
+  fact a cold agent needs (a `<feature>/phase-<n>-<desc>` branch means a spec is in flight)
+  rides in `spec-phase`'s skill description, which is already in context every session.
 
   Fill the placeholders, then DELETE this comment block before writing the file:
     <SPECS_DIR>          specs root the spec skills use — must match what they glob for
@@ -14,23 +17,21 @@
   Keep the `<!-- rulebook vN -->` marker verbatim — it is how the skills detect that a
   project's copy has fallen behind this template. Never hand-edit the number in a project.
   "Capability baseline" is OPT-IN: keep the subsection only in projects adopting it, delete
-  it otherwise. Bump the version here AND in claude-md-stub.md whenever either changes.
-
-  The stub repeats three invariants from this file on purpose — they must bind agents that
-  never trigger a spec skill. Do not "deduplicate" them out of either place.
+  it otherwise.
 -->
 
 # Spec-Driven Execution Workflow
-<!-- rulebook v6 -->
+<!-- rulebook v7 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation
 (via the `spec-phase` skill).
 
-This is the full rulebook. The spec skills read it when they run; it is deliberately kept
-out of `CLAUDE.md` so sessions doing ordinary work don't carry it. The few invariants that
-must bind agents who never trigger a spec skill live in `CLAUDE.md` → "Spec-Driven
-Execution Workflow", which points here for everything else.
+This is the full rulebook, and the only file the workflow adds to this project. The spec
+skills read it when they run; it is deliberately kept out of `CLAUDE.md` so sessions doing
+ordinary work don't carry it and a shared repo's instructions stay clean. An agent that
+lands on a `<feature-slug>/phase-<n>-<desc>` branch without invoking a spec skill is caught
+by `spec-phase`'s skill description, which names that branch shape and points here.
 
 ## State model
 - **Git is the authoritative state store**: branch name encodes spec+phase

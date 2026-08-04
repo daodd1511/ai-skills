@@ -10,42 +10,34 @@ exists, hand off to the `spec-phase` skill to actually run a phase.
 
 The rulebook (state model, branch model, gate lanes, checkpoints) is `specs/RULEBOOK.md` —
 this skill implements it, not restates it. Read it at Step 0; it is not in context by
-default. `CLAUDE.md` carries only a stub pointing at it.
+default, and nothing about this workflow lives in `CLAUDE.md`.
 
 ## Step 0 — Load state
 
 1. **Locate and read the rulebook**: `specs/RULEBOOK.md` (or the project's `<SPECS_DIR>`).
    Read it — the state model (`done-with-debt`, `[~]`, checkpoints, parking) is defined
    there, and improvising substitute definitions would leave EXECUTION.md meaning different
-   things to spec-phase later. Three cases when it's absent:
+   things to spec-phase later.
 
-   - **CLAUDE.md has an inline "Spec-Driven Execution Workflow" section with a rulebook
-     marker below v3** — a pre-split project. Offer to migrate: move that section's body to
-     `specs/RULEBOOK.md` (promoting its `###` headings to `##`), replace the section in
-     CLAUDE.md with this skill's `references/claude-md-stub.md`, and apply any version
-     upgrade in the same pass. The project keeps its resolved placeholders and its
-     keep-or-drop choice on the "Capability baseline" subsection. Say what this buys — the
-     rulebook stops loading in every session and is read only when a spec skill runs.
-   - **CLAUDE.md has such a section at v3 or above** — the stub is missing its file. Ask
-     before assuming; do not silently regenerate a rulebook the project may have moved.
-   - **Neither exists** — fresh setup. Read `references/rulebook.md`, resolve its
-     placeholders (`<SPECS_DIR>` = the specs root the skills glob, default `specs`;
-     `<INTEGRATION_BRANCH>` from `git branch`, e.g. `develop`/`main`; `<SPECS_INDEX_CMD>` =
-     the index-regen command, or delete the INDEX.md bullet if the project has no such
-     generator), decide with the user whether to keep the opt-in "Capability baseline"
-     subsection, drop the leading `<!-- TEMPLATE -->` comment, and write
-     `specs/RULEBOOK.md`. Then do the same with `references/claude-md-stub.md` and append it
-     to `CLAUDE.md`. Confirm the resolved values with the user before writing either.
+   **When it's absent** — fresh setup. Read `references/rulebook.md`, resolve its
+   placeholders (`<SPECS_DIR>` = the specs root the skills glob, default `specs`;
+   `<INTEGRATION_BRANCH>` from `git branch`, e.g. `develop`/`main`; `<SPECS_INDEX_CMD>` =
+   the index-regen command, or delete the INDEX.md bullet if the project has no such
+   generator), decide with the user whether to keep the opt-in "Capability baseline"
+   subsection, drop the leading `<!-- TEMPLATE -->` comment, and write `specs/RULEBOOK.md`.
+   Confirm the resolved values with the user before writing. `specs/RULEBOOK.md` is the
+   only file this workflow adds to a project — never write a workflow section into
+   `CLAUDE.md`, in this project or globally. A project whose CLAUDE.md still carries a
+   legacy "Spec-Driven Execution Workflow" section: say so once and offer to delete it,
+   after confirming its content is in the rulebook.
 
    Do not proceed until the rulebook exists and you have read it.
 
    **Version check** (when it does exist): compare its `<!-- rulebook vN -->` marker against
    the template's. Missing, or lower → the project is on a stale copy: say so, show what
-   changed between the versions, and offer to upgrade both the rulebook and the CLAUDE.md
-   stub together — they share a version and drift apart silently otherwise. Never bump a
-   marker without applying the corresponding changes; a number that lies is worse than an
-   absent one. If the user declines, proceed on the old rulebook and don't re-ask this
-   session.
+   changed between the versions, and offer to upgrade. Never bump a marker without applying
+   the corresponding changes; a number that lies is worse than an absent one. If the user
+   declines, proceed on the old rulebook and don't re-ask this session.
 2. Read `specs/<feature-slug>/PLAN.md` in full. If it doesn't exist, stop and ask for the
    slug or tell the user to run `/grill-me` first.
 3. Check whether `specs/<feature-slug>/EXECUTION.md` already exists. If it does and has any
