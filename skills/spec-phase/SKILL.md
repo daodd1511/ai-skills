@@ -53,14 +53,25 @@ is not in context by default, and `CLAUDE.md`'s stub is a summary, not a substit
 
 ## Step 2 — Starting a new phase
 
-1. Determine the base per EXECUTION.md's branch model. **Stacked (default):** the
-   previous phase's branch — even if its PR hasn't merged yet; phase 1 bases off the
-   integration branch. **Sequential (only if opted in for this spec):** checkout the
-   integration branch, `git pull`, and wait for the previous phase's PR to merge before
-   basing off it.
-2. Create branch `<feature-slug>/phase-<n>-<short-desc>` from that base. If stacked and an
-   earlier phase in the chain has since merged to the integration branch, rebase this
-   phase's branch onto the integration branch before starting new work.
+1. Read EXECUTION.md's header for the branch model.
+
+   **Stacked (default, `gh stack`):**
+   - Phase 1 — create the spec's stack: `gh stack init -b <integration-branch>`. Tell the
+     user first that this enables `git rerere` in the repo.
+   - Every phase — from the stack top, `gh stack add <feature-slug>/phase-<n>-<short-desc>`.
+     Always pass the branch name; never `-m`/`-A`/`-u` (they commit for you). If an earlier
+     phase has merged since, run `gh stack sync` before adding — it fast-forwards the trunk
+     and cascade-rebases the rest of the stack, replacing the manual rebase.
+   - Never run `gh stack merge` or `gh stack modify`; `unstack`/`delete` needs an explicit
+     ask. Never run a bare interactive subcommand — `submit`, `checkout`, `switch` and
+     `view` open an editor or pager and hang. Use `--auto`, an explicit argument, `--json`.
+   - If `gh stack` turns out to be unavailable here (exit 9, unknown command), stop and
+     tell the user — the spec was planned as a stack; switching it to sequential is a
+     header change, not something to improvise mid-phase.
+
+   **Sequential:** checkout the integration branch, `git pull`, wait for the previous
+   phase's PR to merge, then `git checkout -b <feature-slug>/phase-<n>-<short-desc>`.
+2. Confirm you are on the new branch before touching code.
 3. Work the checklist top to bottom. Commit at logical sub-steps (never one giant commit).
    Check off each `EXECUTION.md` item immediately when done — not batched at the end.
 4. Do not push or open a PR without a separate explicit go-ahead, even though the commits
@@ -144,16 +155,21 @@ phase, but only under these rules:
    described in a commit message but never `git add`ed has happened before.
 5. Update the STATUS block and checkboxes to reflect reality.
 6. Report to the user: phase gate passed (plus the spec gate on the final phase), fresh
-   review result when one ran, and N commits — then one ask: **"push + open
-   PR?"** (target: the previous phase's branch if stacked and still unmerged, else the
-   integration branch). The PR description must include the phase's **Review checklist**
-   lane, so manual verification happens in the user's review before they merge. With no CI
+   review result when one ran, and N commits — then one ask: stacked → **"push + update the
+   stack on GitHub?"**, answered with `gh stack submit --auto --open`; sequential → **"push
+   + open PR?"** against the integration branch. Say in the ask that `submit` covers every
+   active branch in the stack (earlier phases are no-ops) — do not compute a PR base
+   yourself under the stacked model. The PR description must include the phase's **Review
+   checklist** lane, so manual verification happens in the user's review before they merge.
+   If a diverged stack aborts the submit, surface it and stop; do not retry interactively.
+   With no CI
    item in the file, the phase is complete once the PR is open — do not invent a
    checks-watching step.
 7. **Only if EXECUTION.md carries a CI gate item** (the user opted in at plan time): after
    the PR opens, watch the checks (`gh pr checks --watch`, or the project's CI equivalent)
    — do not report complete while CI is running or red. If CI fails, fix it on the branch,
-   push (pushing CI fixes to the already-authorized PR needs no new ask), and re-watch. For
+   push (`gh stack push` when stacked; pushing CI fixes to the already-authorized PR needs
+   no new ask), and re-watch. For
    a failure that is demonstrably unrelated to the diff (pre-existing on the base branch, or
    an infra flake), re-run it once; if it persists, mark the CI item `[~]` with the evidence
    of unrelatedness and surface it to the user — never chase unrelated red across sessions.
@@ -163,11 +179,14 @@ phase, but only under these rules:
 
 ## Step 4 — After the user merges
 
-1. Checkout the integration branch, `git pull`.
-2. Ask before deleting the merged phase branch (local + remote).
-3. If a later phase is already stacked on the branch that just merged, rebase that phase's
-   branch onto the integration branch now — don't wait for it to become the active phase.
-4. Update STATUS (phase → `done`, or `done-with-debt` if debt remains). Then, if phases
+1. **Stacked:** run `gh stack sync` — it fetches, fast-forwards the trunk, cascade-rebases
+   every remaining phase onto it, pushes, and syncs PR state. That single command replaces
+   the old pull-and-rebase; do not also rebase by hand. If it reports divergence it aborts
+   without pushing — surface that rather than forcing it.
+   **Sequential:** checkout the integration branch, `git pull`.
+2. Ask before deleting the merged phase branch (local + remote). Only after a yes, re-run
+   `gh stack sync --prune` (stacked) or delete the branch directly (sequential).
+3. Update STATUS (phase → `done`, or `done-with-debt` if debt remains). Then, if phases
    remain, ask whether to start the next one (Step 2).
 5. If that was the **final** phase and the project keeps a capability baseline, offer the
    `spec-archive` skill — it folds PLAN.md's `## Spec Delta` into
@@ -192,7 +211,11 @@ violation follows from it. The excuse is the tell.
 | "HANDOFF.md says where I left off" | It's advisory prose from a past session. State is git + STATUS, and only those. |
 | "The user clearly wants the next phase, they said continue the spec" | Starting a phase needs a fresh explicit go-ahead. Resuming an in-progress one doesn't — know which you're doing. |
 | "The phase is done, pushing is implied" | Starting a phase authorized commits and nothing else. Push, PR, and merge are each a separate ask, every time. |
-| "I should wait for phase 1's PR to merge before starting phase 2" | Stacking is the default: base off the previous phase's branch and keep going. Waiting is sequential mode, and that is opt-in per spec. |
+| "I should wait for phase 1's PR to merge before starting phase 2" | Stacking is the default: `gh stack add` on top and keep going. Waiting is sequential mode, and that is only for repos where `gh stack` doesn't run. |
+| "`git checkout -b` is the same thing as `gh stack add`" | It isn't — the branch exists but the stack doesn't track it, so `submit` won't chain its PR and `sync` won't rebase it. Use the CLI for branch creation under the stacked model. |
+| "`gh stack submit` wants to push branches I didn't work on" | That is how the stack updates; earlier phases are no-ops. Say so in the ask rather than hand-picking a push. |
+| "The stack is tangled, `gh stack modify` would fix it" | Restructuring phases is spec-plan's job, and `modify` desyncs EXECUTION.md from the branches it describes. Stop and ask. |
+| "All the phase PRs are approved, `gh stack merge` lands them at once" | Never. Merging is the user's, one phase at a time, and that command is all-or-nothing across the stack. |
 | "This check is too tedious to run, I'll mark it deferred" | `[~]` is for environment blocks — missing tool, missing credentials — with substitute evidence. Effort is not a block. |
 | "Cleaner history if I squash the phase into one commit" | Commit at logical sub-steps, and check items off as they land. Both exist so a cold agent can see where the work actually stopped. |
 | "I'll re-read PLAN.md to rebuild context" | Checklist items name their own files. Open PLAN.md only for the section a specific ambiguous item points at — a full read is a recurring token cost for nothing. |

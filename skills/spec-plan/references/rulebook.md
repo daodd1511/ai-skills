@@ -21,7 +21,7 @@
 -->
 
 # Spec-Driven Execution Workflow
-<!-- rulebook v5 -->
+<!-- rulebook v6 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation
@@ -50,23 +50,44 @@ Execution Workflow", which points here for everything else.
   loudly on drift. On conflict, git and STATUS win — INDEX.md is advisory, like `HANDOFF.md`.
   <!-- DELETE this bullet if the project has no specs-index generator. -->
 
-## Branch model — stacked by default
-- **Default: stacked.** Each phase branches off the **previous phase's branch** (phase 1
-  off the integration branch, currently `<INTEGRATION_BRANCH>`; resolve at plan time, never
-  hardcode). Push → PR to the previous phase's branch (or to the integration branch if the
-  previous phase already merged) → continue to the next phase without waiting for
-  review/merge. Rebase onto the integration branch after an earlier phase's PR merges.
-- **Sequential (off the integration branch, wait for merge) is opt-in only** — use it only
-  when the user explicitly says so for this spec (e.g. "do phases sequentially" / "wait for
-  merge before the next phase"). When opted in: each phase branches off the integration
-  branch → push → PR → user reviews & merges → pull → next phase branches off the updated
-  integration branch.
+## Branch model — stacked via `gh stack`
+- **Default: stacked, driven by `gh stack`** (GitHub's stacked-PR CLI). One stack per spec,
+  rooted at the integration branch (currently `<INTEGRATION_BRANCH>`; resolve at plan time,
+  never hardcode). Each phase is one branch on that stack, still named
+  `<feature-slug>/phase-<n>-<desc>` — the CLI tracks the base chain, so no phase computes
+  its own base or PR target.
+  - Spec start: `gh stack init -b <INTEGRATION_BRANCH>` (adopts existing branches, and
+    **turns on `git rerere` in the repo** — say so before running it on a repo that hasn't
+    opted into that).
+  - Phase start: `gh stack add <feature-slug>/phase-<n>-<desc>`, from the stack top. Pass
+    the name explicitly — the auto-generated date-slug form breaks the state model, which
+    reads spec and phase out of the branch name. Never `-m`/`-A`/`-u`; commits are ordinary
+    git commits at logical sub-steps.
+  - Push + PR: `gh stack submit --auto --open`. This submits every active branch in the
+    stack, not just the current phase's — already-submitted phases are no-ops — so the
+    phase's single remote-action ask is "push + update the stack on GitHub?".
+  - After a merge: `gh stack sync` (fetch, fast-forward trunk, cascade-rebase the
+    remaining phases, push, sync PR state) — it replaces the manual pull-and-rebase. Add
+    `--prune` only once the user has said yes to deleting merged phase branches.
+  - Reading stack shape: `gh stack view --json`. Git remains the authoritative state store.
+- **Non-interactive always.** Bare `gh stack submit`, `switch`, `checkout`, and `view` open
+  full-screen editors or a pager and will hang an agent. Use the flags above; on a diverged
+  stack, non-interactive `sync` aborts without pushing — surface that to the user rather
+  than retrying interactively.
+- **Never run `gh stack merge`** (all-or-nothing across the stack; merging is the user's
+  decision, per phase) **or `gh stack modify`** (restructures phases — that is `spec-plan`'s
+  job, and it desyncs EXECUTION.md). `gh stack unstack`/`delete` needs an explicit ask.
+- **Fallback: sequential.** When `gh stack` is unavailable — the CLI lacks the command, or
+  the repo returns "stacked pull requests not enabled" (exit 9), or the remote isn't
+  GitHub — the spec runs sequential: each phase branches off the integration branch → push
+  → PR → user reviews & merges → pull → next phase off the updated integration branch. The
+  user may also choose sequential outright. Record the choice in EXECUTION.md's header.
 - After a phase's PR merges, ask before deleting the merged phase branch (local + remote).
 
 ## Checkpoints
 - Starting a phase authorizes its commits — nothing else.
-- Gate pass → one ask: "push + open PR?". Remote actions are never bundled with anything
-  else.
+- Gate pass → one ask: "push + update the stack on GitHub?" (sequential: "push + open
+  PR?"). Remote actions are never bundled with anything else.
 - **Evidence before claims.** If you have not run the command in this message, you cannot
   say it passes. This binds every status claim: tests pass ⇒ runner output with 0 failures;
   build succeeds ⇒ exit 0; bug fixed ⇒ the original symptom retested; phase complete ⇒ the

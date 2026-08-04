@@ -60,6 +60,13 @@ default. `CLAUDE.md` carries only a stub pointing at it.
 5. Resolve the **integration branch** (the rulebook's branch model names it; otherwise
    `git branch` for the convention in use). Name it explicitly in EXECUTION.md; never write
    a hardcoded assumption.
+6. **Probe `gh stack` availability** — the default branch model depends on it. Run
+   `gh stack view --json` at the repo root and read the exit code: `2` (not in a stack) means
+   the command works and the repo has stacked PRs enabled → stacked. `9` ("stacked pull
+   requests not enabled for repository"), an unknown-command error from an older `gh`, or a
+   non-GitHub remote → the spec runs **sequential**; say which of those it was, don't just
+   silently downgrade. The user may also ask for sequential outright. Record the resolved
+   model in EXECUTION.md's header.
 
 ## Step 1 — Surface ambiguity before phasing anything
 
@@ -99,11 +106,13 @@ split by "this felt like a lot" — a phase should be independently verifiable a
 independently revertable, because **phases stack and may not have merged yet** when the
 next one starts (stacked model — see rulebook).
 
-For each phase: branch name `<feature-slug>/phase-<n>-<short-desc>`. Base is the
-**previous phase's branch** (stacked, default) — phase 1 bases off the integration branch.
-Only base every phase off the integration branch (waiting for each merge first) if the
-user explicitly opts into sequential mode for this spec; record that choice in
-EXECUTION.md's header if so.
+For each phase: branch name `<feature-slug>/phase-<n>-<short-desc>`. Under the default
+stacked model the spec is one `gh stack` rooted at the integration branch and each phase is
+one branch added to it — `spec-phase` runs `gh stack init`/`add`, so do not write base
+branches or PR targets into EXECUTION.md; the CLI owns the chain. Under sequential
+(Step 0's probe failed, or the user asked for it) every phase bases off the integration
+branch and waits for the previous merge. Either way the resolved model goes in
+EXECUTION.md's header.
 
 ## Step 3 — Write each phase's checklist and gates
 
@@ -185,8 +194,9 @@ they predate v2 and carry stale conventions):
 # <Feature> — Execution Plan
 
 Spec: [PLAN.md](PLAN.md). Rulebook: `specs/RULEBOOK.md`.
-Integration branch: `<resolved-branch>`. Branch model: <stacked (default) | sequential
-(opted in)>.
+Integration branch: `<resolved-branch>`. Branch model: <stacked via `gh stack` (default) |
+sequential — `<why: gh stack unavailable (exit 9 / old gh / non-GitHub remote) | user
+asked>`>.
 
 ## STATUS
 
@@ -197,8 +207,8 @@ Integration branch: `<resolved-branch>`. Branch model: <stacked (default) | sequ
 
 ## Phase <n> — <name>
 
-Branch: `<feature-slug>/phase-<n>-<short-desc>` (off `<previous-phase-branch>`, stacked —
-or off `<integration-branch>` if phase 1, or if sequential mode is opted in)
+Branch: `<feature-slug>/phase-<n>-<short-desc>` (stacked: `gh stack add` — sequential: off
+`<integration-branch>`)
 
 <one line: why this is one phase — the dependency boundary it sits on>
 
@@ -263,6 +273,11 @@ skill — do not auto-start execution, starting a phase still needs the explicit
   diff verified as a whole.
 - Do not add a CI item unless the user asked for CI gating on this spec — and when they
   do, add it to the spec gate, not to every phase.
+- Do not write base branches or PR targets into a stacked spec's phases — `gh stack` owns
+  the chain, and a hand-written base is the thing that goes stale after a merge.
+- Do not assume the stacked model without Step 0's probe. `gh stack` is in public preview
+  and gated per repository; planning a stack for a repo that can't run one strands the
+  spec at its first push.
 - Do not omit the phase's `Fresh review:` decision, invoke the reviewer for a phase marked
   `not required` when no end-of-phase upgrade applies, or downgrade a planned requirement.
 - Do not resolve a `MODIFIED` with no baseline entry by writing the requirement yourself —
