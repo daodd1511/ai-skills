@@ -48,8 +48,8 @@ is not in context by default, and `CLAUDE.md`'s stub is a summary, not a substit
   prior item's files only when the current item directly builds on them.
 - If the current phase is `done` or `done-with-debt` and merged → **start next phase**:
   requires a fresh explicit go-ahead from the user, do not assume it.
-- If the checklist is fully checked but the agent gate was never actually run → stop, run
-  the gate now, before anything else.
+- If the checklist is fully checked but the phase gate was never actually run → stop, run
+  it now, before anything else.
 
 ## Step 2 — Starting a new phase
 
@@ -95,20 +95,28 @@ phase, but only under these rules:
 
 ## Step 3 — Completing a phase
 
-1. Run the local **agent gate** exactly as written in `EXECUTION.md` (typecheck, tests,
-   build). The `CI green on the phase PR` item is the one exception — it cannot run
-   pre-PR and resolves in step 5. Exactly means exactly: do not substitute a different command, and in particular do not
-   narrow it — never swap a dependency-aware test command for a list of test files you
-   think are the relevant ones, and never scope a project-wide typecheck down to the
-   phase's packages. That narrowing is what lets a shared-type change pass the gate and
-   fail CI. Filling in the changed-file arguments a gate command expects is not
-   substitution — that's the gate working as written. If a written gate command is wrong
-   or won't run, stop, fix it in
-   EXECUTION.md, tell the user, then run the corrected command. When a gate fails, quote
-   only the failing portion of the output, not the full log.
+1. Run the **phase gate** exactly as written in `EXECUTION.md` (project-wide typecheck +
+   dependency-aware tests). Exactly means exactly: do not substitute a different command,
+   and in particular do not narrow it — never swap a dependency-aware test command for a
+   list of test files you think are the relevant ones, and never scope a project-wide
+   typecheck down to the phase's packages. That narrowing is what lets a shared-type
+   change pass the gate. Filling in the changed-file arguments a gate command expects is
+   not substitution — that's the gate working as written. Equally, do not *widen* it:
+   running the full suite or a build here is the spec gate's job, once, and pulling it
+   forward into every phase is exactly the repeated cost this model removes. If a written
+   gate command is wrong or won't run, stop, fix it in EXECUTION.md, tell the user, then
+   run the corrected command. When a gate fails, quote only the failing portion of the
+   output, not the full log.
    All must actually pass. An item may become `[~]` deferred only if environment-blocked
    (missing tool/credentials, not effort) — record substitute evidence inline and mirror
    it in STATUS's verification-debt list; the phase state is then `done-with-debt`.
+
+   **If this is the final phase**, also run the `## Spec gate` items at the end of
+   EXECUTION.md — full local suite, plus the build if one is listed — over the whole
+   accumulated spec diff, under the same rules. Failures here are fixed on this branch as
+   `(amended <date>)` items; if the cause sits in an already-merged phase, fix it forward,
+   never reopen the merged phase. A CI item appears only when the user asked for CI gating
+   (see step 7); otherwise no agent watches checks and these gates are the verdict.
 2. **Resolve the fresh-review decision from the actual diff.** Keep `required` if the phase
    records it. For a legacy phase with no `Fresh review:` line, start from `not required`.
    Upgrade to `required` when the actual diff crosses a rulebook hard trigger (auth,
@@ -120,14 +128,14 @@ phase, but only under these rules:
    `required`. If review remains `not required`, do not invoke the skill or build a review
    packet.
 3. If review is required, invoke `fresh-review` now with the phase goal, complete base/head
-   change set, constraints and interfaces, and the exact local-gate evidence from step 1.
+   change set, constraints and interfaces, and the exact gate evidence from step 1.
    This workflow invocation authorizes the skill's single read-only fresh-context
    delegation; it does not authorize edits, remote actions, or provider selection by the
    reviewer. Handle the result as follows:
    - No P0-P2 findings: continue.
    - P0-P2 findings: make the minimal corrections in this implementation context, add
      correction work as `(amended <date>)` items rather than rewriting checked items,
-     commit at a logical sub-step, rerun the complete local agent gate, then invoke one
+     commit at a logical sub-step, rerun the complete phase gate, then invoke one
      `fresh-review` re-review with the prior findings.
    - Actionable findings remaining after that re-review: stop and surface them to the user
      for direction. Do not start a third review or ask to push/open a PR.
@@ -135,20 +143,23 @@ phase, but only under these rules:
    introduced must appear in `git show --stat` of a commit on the phase branch — a file
    described in a commit message but never `git add`ed has happened before.
 5. Update the STATUS block and checkboxes to reflect reality.
-6. Report to the user: local gate passed, fresh review result when one ran, and N commits —
-   then one ask: **"push + open
+6. Report to the user: phase gate passed (plus the spec gate on the final phase), fresh
+   review result when one ran, and N commits — then one ask: **"push + open
    PR?"** (target: the previous phase's branch if stacked and still unmerged, else the
    integration branch). The PR description must include the phase's **Review checklist**
-   lane, so manual verification happens in the user's review before they merge.
-7. After the PR opens, resolve the CI gate item: watch the checks (`gh pr checks
-   --watch`, or the project's CI equivalent) — do not report the phase complete while CI
-   is running or red. If CI fails, fix it on the phase branch, push (pushing CI fixes to
-   the already-authorized PR needs no new ask), and re-watch. For a failure that is
-   demonstrably unrelated to the phase's diff (pre-existing on the base branch, or an
-   infra flake), re-run it once; if it persists, mark the CI item `[~]` with the evidence
-   of unrelatedness and surface it to the user — never chase unrelated red across
-   sessions. Only when CI is green (or `[~]` with evidence) check the item, update
-   STATUS, and report the phase complete.
+   lane, so manual verification happens in the user's review before they merge. With no CI
+   item in the file, the phase is complete once the PR is open — do not invent a
+   checks-watching step.
+7. **Only if EXECUTION.md carries a CI gate item** (the user opted in at plan time): after
+   the PR opens, watch the checks (`gh pr checks --watch`, or the project's CI equivalent)
+   — do not report complete while CI is running or red. If CI fails, fix it on the branch,
+   push (pushing CI fixes to the already-authorized PR needs no new ask), and re-watch. For
+   a failure that is demonstrably unrelated to the diff (pre-existing on the base branch, or
+   an infra flake), re-run it once; if it persists, mark the CI item `[~]` with the evidence
+   of unrelatedness and surface it to the user — never chase unrelated red across sessions.
+   Only when CI is green (or `[~]` with evidence) check the item, update STATUS, and report
+   complete. If the user asks for CI gating mid-spec, add the item to the `## Spec gate`
+   block first, then run this step.
 
 ## Step 4 — After the user merges
 
@@ -186,9 +197,11 @@ violation follows from it. The excuse is the tell.
 | "Cleaner history if I squash the phase into one commit" | Commit at logical sub-steps, and check items off as they land. Both exist so a cold agent can see where the work actually stopped. |
 | "I'll re-read PLAN.md to rebuild context" | Checklist items name their own files. Open PLAN.md only for the section a specific ambiguous item points at — a full read is a recurring token cost for nothing. |
 | "The gate's test command is broader than this phase needs" | That breadth is the point: a shared-type change breaks consumers the edited-file list never mentions. Never narrow a project-wide typecheck, never swap dependency-aware selection for hand-picked files. |
+| "This phase touches shared types, I'd better run the full suite too" | The full suite is the spec gate, run once before the final phase's PR. Pulling it into every phase is the repeated cost this model exists to remove. |
+| "I'll watch CI on this PR to be safe" | CI is opt-in. No CI item in EXECUTION.md means the user chose not to gate on it; watching checks anyway spends turns on a gate nobody asked for. |
+| "The spec gate failed on code from phase 2, I should reopen that phase" | Merged phases are closed. Fix it forward on the current branch as an `(amended)` item. |
 | "The written gate command won't run, I'll use a close equivalent" | Stop, fix the command in EXECUTION.md, tell the user, then run the corrected one. A silent substitution means the gate that passed is not the gate that was agreed. |
-| "CI is probably fine, the local gate passed" | The local gate is the pre-PR smoke check. CI's full run is the verdict, and a phase is not complete while CI is red or still running. |
-| "The plan marked fresh review unnecessary, so I can ignore what the diff became" | The plan is the initial decision. Re-evaluate the actual diff against the rulebook triggers and confidence question after the local gate. |
+| "The plan marked fresh review unnecessary, so I can ignore what the diff became" | The plan is the initial decision. Re-evaluate the actual diff against the rulebook triggers and confidence question after the phase gate. |
 | "The review found one more issue, so another loop is safer" | One re-review is the cap. Remaining actionable findings go to the user; do not create an unbounded review loop. |
 | "This checked item was done wrong, I'll fix it in place" | Checked items are immutable. Corrections are new `(amended)` items — the record of what happened must survive being wrong. |
 | "Let me re-verify the earlier items to be safe" | The checklist is the record. Re-opening checked work burns context to re-learn what is already written down. |

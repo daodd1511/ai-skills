@@ -126,14 +126,10 @@ and executed in separate sessions, so phase 3's agent has no cheap way to learn 
 actually named things; without this it guesses, and the guess surfaces as a red typecheck
 two phases later. Omit either line when it's genuinely empty.
 
-Gates come in **two lanes**:
+Gates come in **three lanes** — two agent-owed tiers plus the user's:
 
-- **Agent gate (hard)**: a pre-PR smoke check (typecheck, tests, build) plus **CI on the
-  PR as the authoritative full run**. The local commands catch the cheap majority before
-  a PR exists; they never replace CI, and the phase is not done until the PR's CI is
-  green (spec-phase enforces this). Local scoping goes by the *import graph*, never by
-  the list of edited files — a phase that edits a shared model breaks its consumers, and
-  consumers are not in the edited set.
+- **Phase gate (hard, every phase)**: exactly two items, kept cheap because they run n
+  times.
   - *Typecheck*: project-wide. Do not scope it. It has no runtime, no fixtures, no
     services — it is the cheap check, and it is the one that catches a changed shared
     type breaking every package that imports it. `tsc --noEmit` at the root (or the
@@ -146,33 +142,38 @@ Gates come in **two lanes**:
     changed-file arguments left for execution time (spec-phase fills them from the real
     diff). If the runner has no related-tests mode, fall back to the narrowest *suite*
     that contains the consumers (a package's or workspace's whole suite), not a list of
-    files — and note that it's a fallback. **Escalation**: if a phase's items touch
-    shared surfaces (exported types/models, shared schemas or utilities), write the full
-    local suite into that phase's gate instead — the import graph is least trustworthy
-    exactly there (fixtures, DI, serialized shapes carry no import edge), and that is
-    where consumer breakage originates.
-  - *Build*: only if the phase's changes can plausibly break it (config, entry points,
-    codegen); skip it for leaf-level code already covered by typecheck.
-  - *CI*: end every phase's gate with `- [ ] CI green on the phase PR`. spec-phase
-    resolves it after opening the PR by watching checks (`gh pr checks --watch` or the
-    project's equivalent); red CI is the executing agent's to fix, on the phase branch,
-    before the phase can be marked done.
+    files — and note that it's a fallback.
 
-  Write the concrete command(s) into the gate item — an agent picking up the phase must
-  not have to decide the scope itself. The local items must pass before the PR is opened;
-  the CI item resolves after. Only write items the agent can actually run in this
-  environment. If an agent-owed check is foreseeably
-  environment-blocked (needs credentials, a live service), say so in the item now — at
-  execution time it becomes `[~]` with substitute evidence, per the rulebook.
+  Do not put the full suite or a build in a phase gate, and do not escalate a phase gate
+  because it touches shared surfaces — that is what the spec gate is for.
+- **Spec gate (hard, once — before the final phase's PR)**: written at the end of
+  EXECUTION.md, not inside any phase. The full local test suite over the whole accumulated
+  spec diff, plus a build command if the spec's changes can plausibly break it (config,
+  entry points, codegen) — skip the build for leaf-level code already covered by
+  typecheck. This lane exists because the import graph is least trustworthy exactly where
+  specs do damage: fixtures, DI wiring, and serialized shapes carry no import edge, so
+  dependency-aware selection misses them. Paying it once at the end costs one full run per
+  spec instead of one per phase.
 - **Review checklist**: the manual scenarios (browser walkthroughs, visual checks) the
   *user* verifies while reviewing the PR. spec-phase copies this lane into the PR
   description. These never block phase completion and never become agent debt.
+
+**CI is opt-in.** Do not write a `CI green on the … PR` item unless the user asks for CI
+gating on this spec. When they do, add it as a **spec gate** item (`- [ ] CI green on the
+final phase PR`), not to every phase — spec-phase then watches checks after that PR opens.
+Without the ask, the phase and spec gates are the verdict.
+
+Write the concrete command(s) into every gate item — an agent picking up the phase must
+not have to decide the scope itself. Only write items the agent can actually run in this
+environment. If an agent-owed check is foreseeably environment-blocked (needs credentials,
+a live service), say so in the item now — at execution time it becomes `[~]` with
+substitute evidence, per the rulebook.
 
 **Fresh-review decision.** Classify each phase from its planned scope using the rulebook's
 hard triggers. Write exactly one line: `Fresh review: required — <trigger>` or
 `Fresh review: not required`. This is not a third checklist lane and has no checkbox.
 Do not invoke `fresh-review` while planning. `spec-phase` owns invocation after the local
-gate and may upgrade `not required` from the actual diff; it may never downgrade
+phase gate and may upgrade `not required` from the actual diff; it may never downgrade
 `required`.
 
 ## Step 4 — Assemble EXECUTION.md
@@ -208,19 +209,21 @@ Fresh review: <required — hard trigger | not required>
 
 - [ ] <item naming exact files/functions>
 
-**Agent gate (hard):**
+**Phase gate (hard):**
 - [ ] <project-wide typecheck command — not scoped to this phase>
-- [ ] <dependency-aware test command, e.g. `vitest related --run <changed files>` — or
-  the full suite if this phase touches shared surfaces>
-- [ ] CI green on the phase PR
+- [ ] <dependency-aware test command, e.g. `vitest related --run <changed files>`>
 
 **Review checklist (user, at PR review):**
 - [ ] <manual scenario>
 
-**On completion:** run local agent gate; run `fresh-review` when the recorded or actual-diff
-decision requires it; update STATUS + checkboxes; stop and ask before push/PR. After the PR
-opens, watch CI and fix red before marking the phase done. Review checklist goes into the
-PR description.
+**On completion:** run the phase gate; run `fresh-review` when the recorded or actual-diff
+decision requires it; update STATUS + checkboxes; stop and ask before push/PR. Review
+checklist goes into the PR description.
+
+## Spec gate (hard — once, before the final phase's PR)
+
+- [ ] <full local test suite command>
+- [ ] <build command — omit this item entirely if nothing in the spec can break the build>
 ```
 
 **Keep it terse.** EXECUTION.md is re-read at the start of every spec-phase session, so
@@ -248,14 +251,18 @@ skill — do not auto-start execution, starting a phase still needs the explicit
   anything hard to reverse — that's Step 1's job, don't skip it under time pressure.
 - Do not regenerate an EXECUTION.md that already has checked-off progress without explicit
   confirmation.
-- Do not put agent-unrunnable manual checks in the agent gate — they belong in the review
+- Do not put agent-unrunnable manual checks in a gate — they belong in the review
   checklist lane.
 - Do not copy PLAN.md prose into EXECUTION.md — reference sections by name instead.
 - Do not scope the typecheck to the phase, and do not write a test gate as a hand-picked
   list of test files. Both let a shared-model change ship with its consumers broken, which
   surfaces as a red PR after the gate passed.
-- Do not omit the `CI green on the phase PR` gate item, and do not treat the local gate as
-  the final verdict — it is the smoke check; CI's full run is authoritative.
+- Do not put the full suite or a build in a phase gate — those are the spec gate's, run
+  once. A phase gate is two items, and every item added to it is paid n times.
+- Do not omit the spec gate; a spec with no full-suite run has never had its accumulated
+  diff verified as a whole.
+- Do not add a CI item unless the user asked for CI gating on this spec — and when they
+  do, add it to the spec gate, not to every phase.
 - Do not omit the phase's `Fresh review:` decision, invoke the reviewer for a phase marked
   `not required` when no end-of-phase upgrade applies, or downgrade a planned requirement.
 - Do not resolve a `MODIFIED` with no baseline entry by writing the requirement yourself —

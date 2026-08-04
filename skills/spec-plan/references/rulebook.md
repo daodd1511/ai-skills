@@ -21,7 +21,7 @@
 -->
 
 # Spec-Driven Execution Workflow
-<!-- rulebook v4 -->
+<!-- rulebook v5 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation
@@ -72,11 +72,21 @@ Execution Workflow", which points here for everything else.
   build succeeds ⇒ exit 0; bug fixed ⇒ the original symptom retested; phase complete ⇒ the
   gate actually run. A prior run, a partial run, or "should pass" is not evidence, and
   checking a box is not running a command.
-- A phase is complete only when its **agent gate** (typecheck, tests, build) actually
-  passed **and the phase PR's CI is green**. The local gate is a pre-PR smoke check; CI's full run is authoritative, and red
-  CI on a phase PR is the agent's to fix before the phase is done. Manual verification scenarios
-  are the **review checklist**, listed in the PR description for the user to walk through
-  before merging — they are the user's, not agent debt.
+- Verification runs in **two tiers**, so the expensive checks are paid once per spec rather
+  than once per phase:
+  - **Phase gate (every phase, cheap)**: project-wide typecheck + dependency-aware tests on
+    the phase's changed files. A phase is complete when its phase gate passed. Nothing else
+    belongs here — no full suite, no build, no CI watch.
+  - **Spec gate (once, before the final phase's PR)**: the full local test suite, plus the
+    build if the spec's changes can plausibly break it, over the whole accumulated spec
+    diff. This is where a phase-gate escape surfaces. Failures found here are fixed on the
+    final phase's branch as `(amended)` items; if the cause sits in an already-merged
+    phase, fix it forward — never reopen a merged phase.
+  - **CI is opt-in.** Add a `CI green on the final phase PR` item to the spec gate only
+    when the user asks for CI gating. Without that ask, the phase and spec gates are the
+    verdict and no agent watches checks.
+  Manual verification scenarios are the **review checklist**, listed in the PR description
+  for the user to walk through before merging — they are the user's, not agent debt.
 - **Fresh review is conditional, not a universal gate.** Each phase records
   `Fresh review: required — <hard trigger>` or `Fresh review: not required` when planned.
   Require it for changes involving authentication/authorization, cryptography, secrets or
@@ -87,7 +97,7 @@ Execution Workflow", which points here for everything else.
   behavior needed two correction attempts, or the implementer answers yes to: "Am I less
   confident in this change than usual, or did it grow beyond what was asked?" Never
   downgrade a planned requirement. A required review runs through `fresh-review` after the
-  local agent gate and before push/PR. Fix actionable findings, rerun the full local gate,
+  phase gate and before push/PR. Fix actionable findings, rerun the phase gate,
   and allow one fresh re-review only; if actionable findings remain, stop and put them to
   the user. When review is not required, do not invoke the skill or build a review packet.
 - **One spec in flight at a time.** Do not start or resume a different spec's phase while
