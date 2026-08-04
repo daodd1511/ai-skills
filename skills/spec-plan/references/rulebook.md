@@ -21,7 +21,7 @@
 -->
 
 # Spec-Driven Execution Workflow
-<!-- rulebook v3 -->
+<!-- rulebook v4 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation
@@ -77,6 +77,19 @@ Execution Workflow", which points here for everything else.
   CI on a phase PR is the agent's to fix before the phase is done. Manual verification scenarios
   are the **review checklist**, listed in the PR description for the user to walk through
   before merging — they are the user's, not agent debt.
+- **Fresh review is conditional, not a universal gate.** Each phase records
+  `Fresh review: required — <hard trigger>` or `Fresh review: not required` when planned.
+  Require it for changes involving authentication/authorization, cryptography, secrets or
+  injection boundaries; payments or financial calculations; persistent-data migrations,
+  destructive operations, or other hard-to-reverse writes; CI/test-gate infrastructure;
+  or error/rollback paths protecting money or durable data. At phase end, upgrade
+  `not required` to `required` if the actual diff crosses one of those triggers, the same
+  behavior needed two correction attempts, or the implementer answers yes to: "Am I less
+  confident in this change than usual, or did it grow beyond what was asked?" Never
+  downgrade a planned requirement. A required review runs through `fresh-review` after the
+  local agent gate and before push/PR. Fix actionable findings, rerun the full local gate,
+  and allow one fresh re-review only; if actionable findings remain, stop and put them to
+  the user. When review is not required, do not invoke the skill or build a review packet.
 - **One spec in flight at a time.** Do not start or resume a different spec's phase while
   another has an unfinished phase. Finish the current phase, or explicitly **park** it with
   the user's go-ahead: a `WIP: parked <date>` commit on the phase branch plus a STATUS note

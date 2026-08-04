@@ -168,6 +168,13 @@ Gates come in **two lanes**:
   *user* verifies while reviewing the PR. spec-phase copies this lane into the PR
   description. These never block phase completion and never become agent debt.
 
+**Fresh-review decision.** Classify each phase from its planned scope using the rulebook's
+hard triggers. Write exactly one line: `Fresh review: required — <trigger>` or
+`Fresh review: not required`. This is not a third checklist lane and has no checkbox.
+Do not invoke `fresh-review` while planning. `spec-phase` owns invocation after the local
+gate and may upgrade `not required` from the actual diff; it may never downgrade
+`required`.
+
 ## Step 4 — Assemble EXECUTION.md
 
 Use this skeleton exactly (do not copy the shape from older `specs/*/EXECUTION.md` files —
@@ -197,6 +204,8 @@ or off `<integration-branch>` if phase 1, or if sequential mode is opted in)
 Consumes: `<exact names/signatures this phase relies on from earlier phases>`
 Produces: `<exact names/signatures later phases build on>`
 
+Fresh review: <required — hard trigger | not required>
+
 - [ ] <item naming exact files/functions>
 
 **Agent gate (hard):**
@@ -208,9 +217,10 @@ Produces: `<exact names/signatures later phases build on>`
 **Review checklist (user, at PR review):**
 - [ ] <manual scenario>
 
-**On completion:** run local agent gate, update STATUS + checkboxes, stop and ask before
-push/PR; after the PR opens, watch CI and fix red before marking the phase done. Review
-checklist goes into the PR description.
+**On completion:** run local agent gate; run `fresh-review` when the recorded or actual-diff
+decision requires it; update STATUS + checkboxes; stop and ask before push/PR. After the PR
+opens, watch CI and fix red before marking the phase done. Review checklist goes into the
+PR description.
 ```
 
 **Keep it terse.** EXECUTION.md is re-read at the start of every spec-phase session, so
@@ -246,5 +256,7 @@ skill — do not auto-start execution, starting a phase still needs the explicit
   surfaces as a red PR after the gate passed.
 - Do not omit the `CI green on the phase PR` gate item, and do not treat the local gate as
   the final verdict — it is the smoke check; CI's full run is authoritative.
+- Do not omit the phase's `Fresh review:` decision, invoke the reviewer for a phase marked
+  `not required` when no end-of-phase upgrade applies, or downgrade a planned requirement.
 - Do not resolve a `MODIFIED` with no baseline entry by writing the requirement yourself —
   that is the backfill, and it needs test evidence or the user's confirmation.

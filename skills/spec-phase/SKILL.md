@@ -109,15 +109,38 @@ phase, but only under these rules:
    All must actually pass. An item may become `[~]` deferred only if environment-blocked
    (missing tool/credentials, not effort) — record substitute evidence inline and mirror
    it in STATUS's verification-debt list; the phase state is then `done-with-debt`.
-2. **Commit-integrity check**: `git status` must be clean, and every new file this phase
+2. **Resolve the fresh-review decision from the actual diff.** Keep `required` if the phase
+   records it. For a legacy phase with no `Fresh review:` line, start from `not required`.
+   Upgrade to `required` when the actual diff crosses a rulebook hard trigger (auth,
+   crypto/secrets/injection, payments/financial calculations, destructive or irreversible
+   durable-data changes, CI/test-gate infrastructure, or money/data-loss error paths), the
+   same behavior needed two correction attempts, or the answer to "Am I less confident in
+   this change than usual, or did it grow beyond what was asked?" is yes. Add the missing
+   line for a legacy phase; when upgrading, record the reason on it. Never downgrade
+   `required`. If review remains `not required`, do not invoke the skill or build a review
+   packet.
+3. If review is required, invoke `fresh-review` now with the phase goal, complete base/head
+   change set, constraints and interfaces, and the exact local-gate evidence from step 1.
+   This workflow invocation authorizes the skill's single read-only fresh-context
+   delegation; it does not authorize edits, remote actions, or provider selection by the
+   reviewer. Handle the result as follows:
+   - No P0-P2 findings: continue.
+   - P0-P2 findings: make the minimal corrections in this implementation context, add
+     correction work as `(amended <date>)` items rather than rewriting checked items,
+     commit at a logical sub-step, rerun the complete local agent gate, then invoke one
+     `fresh-review` re-review with the prior findings.
+   - Actionable findings remaining after that re-review: stop and surface them to the user
+     for direction. Do not start a third review or ask to push/open a PR.
+4. **Commit-integrity check**: `git status` must be clean, and every new file this phase
    introduced must appear in `git show --stat` of a commit on the phase branch — a file
    described in a commit message but never `git add`ed has happened before.
-3. Update the STATUS block and checkboxes to reflect reality.
-4. Report to the user: local gate passed, N commits — then one ask: **"push + open
+5. Update the STATUS block and checkboxes to reflect reality.
+6. Report to the user: local gate passed, fresh review result when one ran, and N commits —
+   then one ask: **"push + open
    PR?"** (target: the previous phase's branch if stacked and still unmerged, else the
    integration branch). The PR description must include the phase's **Review checklist**
    lane, so manual verification happens in the user's review before they merge.
-5. After the PR opens, resolve the CI gate item: watch the checks (`gh pr checks
+7. After the PR opens, resolve the CI gate item: watch the checks (`gh pr checks
    --watch`, or the project's CI equivalent) — do not report the phase complete while CI
    is running or red. If CI fails, fix it on the phase branch, push (pushing CI fixes to
    the already-authorized PR needs no new ask), and re-watch. For a failure that is
@@ -165,6 +188,8 @@ violation follows from it. The excuse is the tell.
 | "The gate's test command is broader than this phase needs" | That breadth is the point: a shared-type change breaks consumers the edited-file list never mentions. Never narrow a project-wide typecheck, never swap dependency-aware selection for hand-picked files. |
 | "The written gate command won't run, I'll use a close equivalent" | Stop, fix the command in EXECUTION.md, tell the user, then run the corrected one. A silent substitution means the gate that passed is not the gate that was agreed. |
 | "CI is probably fine, the local gate passed" | The local gate is the pre-PR smoke check. CI's full run is the verdict, and a phase is not complete while CI is red or still running. |
+| "The plan marked fresh review unnecessary, so I can ignore what the diff became" | The plan is the initial decision. Re-evaluate the actual diff against the rulebook triggers and confidence question after the local gate. |
+| "The review found one more issue, so another loop is safer" | One re-review is the cap. Remaining actionable findings go to the user; do not create an unbounded review loop. |
 | "This checked item was done wrong, I'll fix it in place" | Checked items are immutable. Corrections are new `(amended)` items — the record of what happened must survive being wrong. |
 | "Let me re-verify the earlier items to be safe" | The checklist is the record. Re-opening checked work burns context to re-learn what is already written down. |
 

@@ -14,7 +14,7 @@
 -->
 
 ## Spec-Driven Execution Workflow
-<!-- rulebook v3 -->
+<!-- rulebook v4 -->
 
 Specs live in `<SPECS_DIR>/<feature>/`. Flow: `/grill-me` → `PLAN.md` → `/spec-plan` →
 `EXECUTION.md` → `/spec-phase` per phase.
