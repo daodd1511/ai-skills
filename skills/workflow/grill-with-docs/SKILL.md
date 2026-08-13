@@ -17,7 +17,7 @@ durable residue as they surface:
   the spec's `PLAN.md`, not an ADR (see `docs/DOMAIN-RULEBOOK.md`).
 
 Verify `docs/DOMAIN-RULEBOOK.md` exists and read it — it is not in context by default,
-and `CLAUDE.md` carries only a pointer stub. If it's absent, follow the `domain-modeling`
+and the project's context file (`CLAUDE.md` / `AGENTS.md`) carries only a pointer stub. If it's absent, follow the `domain-modeling`
 skill's setup: it handles fresh creation and migration from a pre-split inline section
 (sibling skill dir: `../domain-modeling/`).
 

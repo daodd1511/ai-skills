@@ -1,8 +1,9 @@
 <!--
   TEMPLATE — domain-model rulebook. Canonical source for a project's
-  docs/DOMAIN-RULEBOOK.md. It lives in its own file, NOT in CLAUDE.md: the domain-modeling
-  and grill-with-docs skills read it on demand when they run, so sessions doing ordinary work
-  don't carry it. CLAUDE.md gets the short stub in `claude-md-stub.md` instead.
+  docs/DOMAIN-RULEBOOK.md. It lives in its own file, NOT in the project's context file: the
+  domain-modeling and grill-with-docs skills read it on demand when they run, so sessions
+  doing ordinary work don't carry it. The context file (CLAUDE.md / AGENTS.md — see
+  ../../SETUP.md) gets the short stub in `context-file-stub.md` instead.
 
   Fill the placeholder, then DELETE this comment block before writing the file:
     <SPECS_DIR>   specs root the spec-plan/spec-phase skills use (e.g. `docs/specs`).
@@ -10,7 +11,7 @@
                   path with wherever feature-scoped decisions should live instead.
   Keep the `<!-- domain-rulebook vN -->` marker verbatim — it is how the skills detect that a
   project's copy has fallen behind this template. Never hand-edit the number in a project.
-  Bump the version here AND in claude-md-stub.md whenever either changes.
+  Bump the version here AND in context-file-stub.md whenever either changes.
 
   The stub repeats the "use the canonical terms" rule on purpose — it binds anyone writing
   code or copy, not just this skill. Do not "deduplicate" it out of either place.

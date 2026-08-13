@@ -1,11 +1,11 @@
 <!--
   TEMPLATE — spec-workflow rulebook. Canonical source for a project's
-  <SPECS_DIR>/RULEBOOK.md, and the ONLY file this workflow adds to a project. It lives in
-  its own file, NOT in CLAUDE.md: the spec skills read it on demand when they run, so a
-  project that isn't doing spec work this session pays nothing for it, and a shared repo's
-  CLAUDE.md stays untouched. Nothing is appended to CLAUDE.md, project or global — the one
-  fact a cold agent needs (a `<feature>/phase-<n>-<desc>` branch means a spec is in flight)
-  rides in `spec-phase`'s skill description, which is already in context every session.
+  <SPECS_DIR>/RULEBOOK.md. The rules live here rather than in the project's context file
+  (CLAUDE.md / AGENTS.md): the spec skills read this file on demand when they run, so a
+  project that isn't doing spec work this session pays nothing for it. What the context file
+  carries is only the pointer section from ../SETUP.md — the specs-root mapping, which no
+  globally installed skill can know and which every session must see. Rulebook plus that
+  section: two files, nothing else.
 
   Fill the placeholders, then DELETE this comment block before writing the file:
     <SPECS_DIR>          specs root the spec skills use — must match what they glob for
@@ -21,17 +21,21 @@
 -->
 
 # Spec-Driven Execution Workflow
-<!-- rulebook v7 -->
+<!-- rulebook v8 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation
 (via the `spec-phase` skill).
 
-This is the full rulebook, and the only file the workflow adds to this project. The spec
-skills read it when they run; it is deliberately kept out of `CLAUDE.md` so sessions doing
-ordinary work don't carry it and a shared repo's instructions stay clean. An agent that
-lands on a `<feature-slug>/phase-<n>-<desc>` branch without invoking a spec skill is caught
-by `spec-phase`'s skill description, which names that branch shape and points here.
+This is the full rulebook. The spec skills read it when they run; it is deliberately kept
+out of the project's context file (`CLAUDE.md` / `AGENTS.md`) so sessions doing ordinary
+work don't carry it. That file holds only the workflow's pointer section (marker
+`<!-- spec-workflow vN -->`): the specs-root mapping that tells a grill session where
+`PLAN.md` goes, plus a pointer back here. If that section is missing, plans land in the
+repo root — fix the section, don't move rules into it. An
+agent that lands on a `<feature-slug>/phase-<n>-<desc>` branch without invoking a spec skill
+is caught by `spec-phase`'s skill description, which names that branch shape and points
+here.
 
 ## State model
 - **Git is the authoritative state store**: branch name encodes spec+phase

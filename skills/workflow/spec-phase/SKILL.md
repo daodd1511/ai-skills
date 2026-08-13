@@ -1,21 +1,22 @@
 ---
 name: spec-phase
-description: Drive phased execution of a spec produced by /grill-me — start the next phase, or resume mid-phase work correctly. Use when the user says "start phase N", "continue the spec", "resume execution", "next phase", or references a specs/<feature>/EXECUTION.md. Also use for ANY work on a branch named <feature>/phase-<n>-<desc> — that name means a spec is mid-execution: git is its state store, so do not commit, squash, rebase, push, or open a PR on such a branch by hand. Its rules live in specs/RULEBOOK.md, never in CLAUDE.md.
+description: Drive phased execution of a spec produced by /grill-me — start the next phase, or resume mid-phase work correctly. Use when the user says "start phase N", "continue the spec", "resume execution", "next phase", or references a specs/<feature>/EXECUTION.md. Also use for ANY work on a branch named <feature>/phase-<n>-<desc> — that name means a spec is mid-execution: git is its state store, so do not commit, squash, rebase, push, or open a PR on such a branch by hand. Its rules live in specs/RULEBOOK.md, which the project's context file only points at.
 argument-hint: "<feature-slug> [phase-n] — omit phase-n to auto-detect where to resume"
 ---
 
 Drives execution of `specs/<feature-slug>/PLAN.md` + `specs/<feature-slug>/EXECUTION.md`.
 The rulebook (state model, branch model, gate lanes, checkpoints, parking) is
 `specs/RULEBOOK.md` — this skill is the procedure that implements it. Read it at Step 0; it
-is not in context by default, and nothing about this workflow lives in `CLAUDE.md`.
+is not in context by default. The project's context file (`CLAUDE.md` / `AGENTS.md`) carries
+only the workflow's pointer section (the specs-root mapping), never the rules themselves.
 
 ## Step 0 — Locate state from git first
 
 1. **Read `specs/RULEBOOK.md`** (or the project's `<SPECS_DIR>`). If it's absent, stop and
    tell the user — do not improvise meanings for `done-with-debt`, `[~]`, or the checkpoint
-   rules; they are defined in the rulebook only, and a project's `CLAUDE.md` is not a
-   fallback source for them. Setup is `spec-plan`'s Step 0, so a project without the file
-   should run `/spec-plan` first. If the rulebook's `<!-- rulebook vN -->` marker is below
+   rules; they are defined in the rulebook only, and the pointer section in a project's
+   context file is a signpost, not a fallback source for them. Setup is `spec-plan`'s Step 0,
+   so a project without the file should run `/spec-plan` first. If the rulebook's `<!-- rulebook vN -->` marker is below
    the template's (`../spec-plan/references/rulebook.md`), mention it once and carry on —
    upgrading mid-spec would change the rules under an in-flight phase, so it belongs to
    `spec-plan` at the start of the next one.

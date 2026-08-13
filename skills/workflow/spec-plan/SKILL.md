@@ -10,7 +10,9 @@ exists, hand off to the `spec-phase` skill to actually run a phase.
 
 The rulebook (state model, branch model, gate lanes, checkpoints) is `specs/RULEBOOK.md` —
 this skill implements it, not restates it. Read it at Step 0; it is not in context by
-default, and nothing about this workflow lives in `CLAUDE.md`.
+default. The only workflow content in the project's context file (`CLAUDE.md` / `AGENTS.md`)
+is the pointer section that maps the specs root (`../SETUP.md`); the rules themselves never
+go there.
 
 ## Step 0 — Load state
 
@@ -25,11 +27,21 @@ default, and nothing about this workflow lives in `CLAUDE.md`.
    the index-regen command, or delete the INDEX.md bullet if the project has no such
    generator), decide with the user whether to keep the opt-in "Capability baseline"
    subsection, drop the leading `<!-- TEMPLATE -->` comment, and write `specs/RULEBOOK.md`.
-   Confirm the resolved values with the user before writing. `specs/RULEBOOK.md` is the
-   only file this workflow adds to a project — never write a workflow section into
-   `CLAUDE.md`, in this project or globally. A project whose CLAUDE.md still carries a
-   legacy "Spec-Driven Execution Workflow" section: say so once and offer to delete it,
-   after confirming its content is in the rulebook.
+   Confirm the resolved values with the user before writing.
+
+   Then find the project's **context file** and check it for a `<!-- spec-workflow vN -->`
+   marker. Which file that is depends on the project, not on which agent you are: check
+   `CLAUDE.md` and `AGENTS.md` both, and read what you find — one is often a stub redirecting
+   to the other (`refer to @CLAUDE.md`), in which case the target holds the real content and
+   is the one to edit. Two independently maintained files both need the section.
+
+   If the marker is absent, offer to append the pointer section from `../SETUP.md`, resolved
+   to the same `<SPECS_DIR>`. That section is what routes a `/grill-me` plan into
+   `<SPECS_DIR>` instead of the repo root — no globally installed skill can supply it, and
+   without it the next grill session in this repo lands `PLAN.md` wherever the model guesses.
+   Offer, don't impose: it edits instructions the user's teammates read. If they decline, say
+   plainly what breaks. The rulebook and that one section are all this workflow adds to a
+   project; never expand the section with rules that belong in the rulebook.
 
    Do not proceed until the rulebook exists and you have read it.
 

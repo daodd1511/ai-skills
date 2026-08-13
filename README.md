@@ -14,6 +14,12 @@ skills/     - authored skills, shared across agents: symlinked into both
               ~/.claude/skills/<name> and ~/.agents/skills/<name> (the
               latter is a shared cross-provider location — Codex and
               others resolve skills from there; see links.txt)
+  workflow/ - the spec-driven workflow: skills that only make sense
+              together, grouped for reading. Install paths are flat
+              regardless of nesting (~/.claude/skills/spec-plan, not
+              .../workflow/spec-plan). SETUP.md is the per-project
+              setup guide — start there when adopting the workflow
+              in a repo.
 claude/
   agents/   - subagent definitions, symlinked into ~/.claude/agents/<name>.md
   plugins/  - authored plugins (own .claude-plugin manifest), symlinked
@@ -27,15 +33,28 @@ codex/
 
 | Skill | Notes |
 |---|---|
-| grill-me | Interview/stress-test a plan until resolved |
+| grill-me | Interview/stress-test a plan until resolved (deliberately spec-agnostic) |
 | handoff | Compact a conversation into a handoff doc |
 | teach | Teach a concept within the current workspace |
 | terse-commit | Ultra-compressed commit message generator |
 | angular-frontend-developer | Angular frontend scaffold |
 | react-frontend-developer | React frontend scaffold |
 | vue-frontend-developer | Vue frontend scaffold |
+| fresh-review | Fresh-context read-only review of a risky change, on request |
+| visualize | Pick the right visual form for data/findings, render as self-contained HTML |
+| bro | Restate the last message in plain language, no jargon (`/bro` only) |
+
+`skills/workflow/` — the spec-driven workflow, five skills that run as one
+pipeline. Setup and the context-file section each project must add
+(`CLAUDE.md`, `AGENTS.md`, or both) are in `skills/workflow/SETUP.md`.
+
+| Skill | Notes |
+|---|---|
+| grill-with-docs | grill-me, plus it maintains the domain model as it goes |
+| domain-modeling | Pin down the ubiquitous language; record ADRs |
 | spec-plan | Turn a /grill-me PLAN.md into a phased EXECUTION.md |
 | spec-phase | Drive phased execution of a spec (start/resume phases) |
+| spec-archive | Fold a finished spec's delta into the capability baseline |
 
 `claude/agents/code-locator.md` — read-only subagent for locating code
 (file:line lookups) without proposing fixes.
