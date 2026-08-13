@@ -15,11 +15,13 @@ skills/     - authored skills, shared across agents: symlinked into both
               latter is a shared cross-provider location — Codex and
               others resolve skills from there; see links.txt)
   workflow/ - the spec-driven workflow: skills that only make sense
-              together, grouped for reading. Install paths are flat
-              regardless of nesting (~/.claude/skills/spec-plan, not
-              .../workflow/spec-plan). SETUP.md is the per-project
-              setup guide — start there when adopting the workflow
-              in a repo.
+              together, plus the two files shared across them
+              (SETUP.md, RULEBOOK-TEMPLATE.md). Install paths are
+              flat regardless of nesting (~/.claude/skills/spec-plan,
+              not .../workflow/spec-plan); skills reach the shared
+              files as ../<file>, which resolves through the symlink
+              back into this folder. Start at SETUP.md when adopting
+              the workflow in a repo.
 claude/
   agents/   - subagent definitions, symlinked into ~/.claude/agents/<name>.md
   plugins/  - authored plugins (own .claude-plugin manifest), symlinked

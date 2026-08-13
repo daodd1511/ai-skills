@@ -3,7 +3,8 @@
   <SPECS_DIR>/RULEBOOK.md. The rules live here rather than in the project's context file
   (CLAUDE.md / AGENTS.md): the spec skills read this file on demand when they run, so a
   project that isn't doing spec work this session pays nothing for it. What the context file
-  carries is only the pointer section from ../SETUP.md — the specs-root mapping, which no
+  carries is only the pointer section from SETUP.md (sibling file) — the specs-root
+  mapping, which no
   globally installed skill can know and which every session must see. Rulebook plus that
   section: two files, nothing else.
 

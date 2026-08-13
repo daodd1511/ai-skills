@@ -19,7 +19,10 @@ durable residue as they surface:
 Verify `docs/DOMAIN-RULEBOOK.md` exists and read it — it is not in context by default,
 and the project's context file (`CLAUDE.md` / `AGENTS.md`) carries only a pointer stub. If it's absent, follow the `domain-modeling`
 skill's setup: it handles fresh creation and migration from a pre-split inline section
-(sibling skill dir: `../domain-modeling/`).
+(sibling skill dir: `../domain-modeling/`, or wherever it is installed — invoke the skill
+by name if that path doesn't resolve). If `domain-modeling` isn't installed at all, say so
+once and run the interview without the domain-model upkeep, rather than improvising a
+rulebook of your own.
 
 ## Capability baseline
 
