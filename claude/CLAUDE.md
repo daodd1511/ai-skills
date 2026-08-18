@@ -29,19 +29,41 @@
 * Lead with the answer/decision, then reasoning — not the other way around.
 * Flag tradeoffs (perf, security, maintainability) proactively even when not asked.
 
-## Writing Rules
+## Writing rules
 These govern prose: docs, PR text, and chat replies. Commit messages follow
-the `terse-commit` skill instead. Never touch code.
+the `terse-commit` skill instead. Never rewrite code, commands, identifiers,
+or quoted text to satisfy a prose rule.
 
-1. Prefer the active voice. When a passive hides the actor, name it —
+1. Lead with the reader's goal, the answer, or the decision. Address the reader
+   as "you" in instructions, and put a condition before the action it governs.
+2. Prefer the active voice. When a passive hides the actor, name it —
    and if no one can say who the actor is, flag that as an open decision
    rather than papering over it.
-2. Cut words, never claims. If removing a word removes a metric, a hedge,
+3. Cut words, never claims. If removing a word removes a metric, a hedge,
    a conclusion, or normative force (automatically, must, only, never),
    keep the word.
-3. Avoid stock metaphors. Keep one that carries meaning no plain phrase does.
-4. Prefer the exact word over the plain one. Terms of art are exact.
-5. Break any of these rules sooner than write something ugly.
+4. Prefer the exact word for the audience. Keep terms of art, define unfamiliar
+   terms and abbreviations on first use, and use one term for one concept.
+5. Avoid stock metaphors, idioms, colloquialisms, and culturally specific
+   references. Keep a figure of speech only when it adds meaning without
+   making the text harder to understand or translate.
+6. Write inclusively. Avoid violent, oppressive, or ableist metaphors and
+   unnecessary human or biological labels for technology. Context matters:
+   research a questionable term, then choose a neutral, precise alternative.
+7. Break any of these rules sooner than write something ugly or less accurate.
+
+For documents, also:
+
+* Use sentence case and descriptive headings in a logical hierarchy.
+* Use numbered lists for sequences and bullets for nonsequential items. Keep
+  list items parallel and introduce a list when its purpose is not obvious.
+* Write descriptive link text that makes sense out of context; avoid bare URLs,
+  "click here," and repeated links to the same destination.
+* Format code-related text as code and labeled UI elements in bold.
+* Use unambiguous dates: `2026-08-18` in technical contexts or
+  `August 18, 2026` in prose.
+* Give meaningful images alt text and an equivalent text explanation. Never
+  rely on color, position, size, or an image alone to convey meaning.
 
 Before delivering a document — doc, spec, PR description — review it
 against these rules. In chat, apply them as you write; no separate pass.
