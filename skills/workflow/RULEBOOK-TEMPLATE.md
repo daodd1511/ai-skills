@@ -3,10 +3,9 @@
   <SPECS_DIR>/RULEBOOK.md. The rules live here rather than in the project's context file
   (CLAUDE.md / AGENTS.md): the spec skills read this file on demand when they run, so a
   project that isn't doing spec work this session pays nothing for it. What the context file
-  carries is only the pointer section from SETUP.md (sibling file) — the specs-root
-  mapping, which no
-  globally installed skill can know and which every session must see. Rulebook plus that
-  section: two files, nothing else.
+  carries is only the pointer section from SETUP.md (sibling file) — the specs-root mapping,
+  which no globally installed skill can know and which every session must see. Rulebook plus
+  that section: two files, nothing else.
 
   Fill the placeholders, then DELETE this comment block before writing the file:
     <SPECS_DIR>          specs root the spec skills use — must match what they glob for
@@ -32,11 +31,10 @@ This is the full rulebook. The spec skills read it when they run; it is delibera
 out of the project's context file (`CLAUDE.md` / `AGENTS.md`) so sessions doing ordinary
 work don't carry it. That file holds only the workflow's pointer section (marker
 `<!-- spec-workflow vN -->`): the specs-root mapping that tells a grill session where
-`PLAN.md` goes, plus a pointer back here. If that section is missing, plans land in the
-repo root — fix the section, don't move rules into it. An
-agent that lands on a `<feature-slug>/phase-<n>-<desc>` branch without invoking a spec skill
-is caught by `spec-phase`'s skill description, which names that branch shape and points
-here.
+`PLAN.md` goes, plus a pointer back here. If that section is missing, plans land in the repo
+root — fix the section, don't move rules into it. An agent that lands on a
+`<feature-slug>/phase-<n>-<desc>` branch without invoking a spec skill is caught by
+`spec-phase`'s skill description, which names that branch shape and points here.
 
 ## State model
 - **Git is the authoritative state store**: branch name encodes spec+phase
@@ -69,9 +67,21 @@ here.
     the name explicitly — the auto-generated date-slug form breaks the state model, which
     reads spec and phase out of the branch name. Never `-m`/`-A`/`-u`; commits are ordinary
     git commits at logical sub-steps.
-  - Push + PR: `gh stack submit --auto --open`. This submits every active branch in the
-    stack, not just the current phase's — already-submitted phases are no-ops — so the
-    phase's single remote-action ask is "push + update the stack on GitHub?".
+  - Push + PR: two commands, because `gh stack submit` accepts a PR description only in
+    its full-screen editor, which an agent's non-interactive terminal never reaches.
+    1. `gh stack submit --auto` submits every active branch in the stack, not just the
+       current phase's — already-submitted phases are no-ops — so the phase's single
+       remote-action ask stays "push + update the stack on GitHub?". New PRs land as
+       drafts carrying auto-generated titles.
+    2. Map branch → PR number with `gh stack view --json`, then give **this phase's PR**
+       its real title and description: `gh pr edit <n> --title '<title>' --body-file
+       <path>`, then `gh pr ready <n>`. Pass `--body-file`, never `--body` — shell
+       quoting mangles a multi-line body. Leave every other PR in the stack alone —
+       earlier phases' descriptions may carry the user's own edits. A later phase's
+       `submit --auto` that regenerates an earlier PR's title has undone this step:
+       restore that title with `gh pr edit`.
+    Never pass `--open` to `submit`: it marks every PR in the stack ready, publishing
+    auto-generated titles and any draft the user left draft deliberately.
   - After a merge: `gh stack sync` (fetch, fast-forward trunk, cascade-rebase the
     remaining phases, push, sync PR state) — it replaces the manual pull-and-rebase. Add
     `--prune` only once the user has said yes to deleting merged phase branches.

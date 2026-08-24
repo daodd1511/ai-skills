@@ -141,14 +141,23 @@ phase, under these rules only:
    message but never `git add`ed has happened before.
 5. Update the STATUS block and checkboxes to reflect reality.
 6. Report: phase gate passed (plus spec gate on the final phase), fresh-review result if one
-   ran, N commits. Then **one** ask — stacked: "push + update the stack on GitHub?", answered
-   with `gh stack submit --auto --open`; sequential: "push + open PR?" against the integration
-   branch. Say in the ask that `submit` covers every active branch in the stack (earlier
-   phases are no-ops); never compute a PR base yourself under the stacked model. The PR
-   description must carry the phase's **Review checklist** lane, so the user's manual
-   verification happens before they merge. A diverged stack aborting the submit → surface it
-   and stop, never retry interactively. With no CI item, the phase is complete once the PR is
-   open; don't invent a checks-watching step.
+   ran, N commits. Then **one** ask — stacked: "push + update the stack on GitHub?";
+   sequential: "push + open PR?" against the integration branch. Say in the ask that `submit`
+   covers every active branch in the stack (earlier phases are no-ops); never compute a PR
+   base yourself under the stacked model. On a yes, stacked, in this order:
+   - `gh stack submit --auto` — pushes and creates/updates the stack's PRs as drafts. Never
+     add `--open`: it publishes every PR in the stack under its auto-generated title.
+   - `gh stack view --json` → this phase's branch → its PR number.
+   - `gh pr edit <n> --title '<title>' --body-file <path>` with the description you wrote for
+     **this phase only**; `--body-file`, never `--body`. Earlier phases' PRs stay untouched.
+   - `gh pr ready <n>`.
+
+   Sequential: one `gh pr create --base <integration-branch> --title '<title>' --body-file
+   <path>`. Either way the description must carry the phase's **Review checklist** lane, so
+   the user's manual verification happens before they merge. A diverged stack aborting the
+   submit → surface it and stop, never retry interactively. The PR counts as open only after
+   `gh pr ready`; with no CI item the phase is complete at that point — don't invent a
+   checks-watching step.
 7. **Only if EXECUTION.md carries a CI gate item** (opted in at plan time): after the PR
    opens, watch checks (`gh pr checks --watch`, or the project's equivalent) — never report
    complete while CI is running or red. Failures get fixed on the branch and pushed
@@ -196,6 +205,8 @@ follows from it. The excuse is the tell.
 | "Wait for phase 1's PR before starting phase 2" | Stacking is the default: `gh stack add` and keep going. Waiting is sequential mode only. |
 | "`git checkout -b` is the same as `gh stack add`" | The stack won't track it, so `submit` won't chain its PR and `sync` won't rebase it. |
 | "`submit` pushes branches I didn't work on" | That's how the stack updates; earlier phases are no-ops. Say so in the ask. |
+| "`--auto --open` does it in one command" | `--auto` can't carry a description and `--open` publishes the whole stack. The checklist lane is what the PR is for. |
+| "While editing PRs I'll fix the earlier ones too" | This phase's PR only. Earlier descriptions may be the user's own edits. |
 | "`gh stack modify` would fix this tangle" | Restructuring is spec-plan's job; `modify` desyncs EXECUTION.md from its branches. |
 | "All PRs approved, `gh stack merge` lands them" | Never. Merging is the user's, one phase at a time; that command is all-or-nothing. |
 | "Too tedious to run, I'll defer it" | `[~]` is for environment blocks with substitute evidence. Effort is not a block. |
