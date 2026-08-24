@@ -15,8 +15,9 @@ carry the explanation, words label the pictures.
 2. **Write the one sentence.** What should the reader understand after two minutes? Every
    picture on the page serves that sentence. If you cannot write it, you do not understand
    the topic well enough to simplify it yet.
-3. **Cut to three to six ideas.** Each becomes one section with one picture. More than six
-   means you are teaching the topic, not explaining it — use the `teach` skill for that.
+3. **Cut to as few ideas as the topic allows.** Each becomes one section with one picture.
+   Every idea must earn its place against the one sentence from step 2 — cut anything that
+   doesn't.
 4. **Anchor each idea in something the reader already knows** — a queue at a counter, a
    locked mailbox, a recipe. One comparison per idea, and say where it breaks down if the
    gap matters.
