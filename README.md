@@ -45,6 +45,7 @@ codex/
 | fresh-review | Fresh-context read-only review of a risky change, on request |
 | visualize | Pick the right visual form for data/findings, render as self-contained HTML |
 | bro | Restate the last message in plain language, no jargon (`/bro` only) |
+| eli5 | Explain a topic to a total beginner as a self-contained HTML page: big pictures, few words |
 
 `skills/workflow/` — the spec-driven workflow, five skills that run as one
 pipeline. Setup and the context-file section each project must add
