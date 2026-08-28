@@ -21,7 +21,7 @@
 -->
 
 # Spec-Driven Execution Workflow
-<!-- rulebook v8 -->
+<!-- rulebook v9 -->
 
 Large/architectural changes flow: `/grill-me` → `<SPECS_DIR>/<feature>/PLAN.md` →
 `<SPECS_DIR>/<feature>/EXECUTION.md` (via the `spec-plan` skill) → phased implementation

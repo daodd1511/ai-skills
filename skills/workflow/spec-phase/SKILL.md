@@ -1,6 +1,13 @@
 ---
 name: spec-phase
-description: Drive phased execution of a spec produced by /grill-me — start the next phase, or resume mid-phase work correctly. Use when the user says "start phase N", "continue the spec", "resume execution", "next phase", or references a specs/<feature>/EXECUTION.md. Also use for ANY work on a branch named <feature>/phase-<n>-<desc> — that name means a spec is mid-execution: git is its state store, so do not commit, squash, rebase, push, or open a PR on such a branch by hand. Its rules live in specs/RULEBOOK.md, which the project's context file only points at.
+description: >-
+  Drive phased execution of a spec produced by /grill-me — start the next phase, or resume
+  mid-phase work correctly. Use when the user says "start phase N", "continue the spec",
+  "resume execution", "next phase", or references a specs/<feature>/EXECUTION.md. Also use
+  for ANY work on a branch named <feature>/phase-<n>-<desc> — that name means a spec is
+  mid-execution: git is its state store, so do not commit, squash, rebase, push, or open a PR
+  on such a branch by hand. Its rules live in specs/RULEBOOK.md, which the project's context
+  file only points at.
 argument-hint: "<feature-slug> [phase-n] — omit phase-n to auto-detect where to resume"
 ---
 
