@@ -63,15 +63,19 @@ only the workflow's pointer section (the specs-root mapping), never the rules th
 1. Read EXECUTION.md's header for the branch model.
 
    **Stacked (default, `gh stack`):**
-   - Phase 1 — create the stack: `gh stack init -b <integration-branch>`. Tell the user first
-     that this enables `git rerere` in the repo.
-   - Every phase — from the stack top, `gh stack add <feature-slug>/phase-<n>-<short-desc>`.
+   - Mechanics — the non-interactive form of each command, `view --json` fields, exit codes,
+     recovery — come from the `gh-stack` skill; load it before the first `gh stack` command.
+     Not installed → `gh stack <command> --help`. This skill and the rulebook decide which
+     commands the workflow permits.
+   - Phase 1 — `gh stack init -b <integration-branch> <feature-slug>/phase-1-<short-desc>`
+     creates the stack and the branch together; bare `init` prompts for a name. Tell the user
+     first that this enables `git rerere` in the repo.
+   - Later phases — `gh stack top`, then `gh stack add <feature-slug>/phase-<n>-<short-desc>`.
      Always pass the branch name; never `-m`/`-A`/`-u`, which commit for you. If an earlier
-     phase merged since, `gh stack sync` first — it fast-forwards the trunk and
-     cascade-rebases the rest, replacing the manual rebase.
+     phase merged since, `gh stack sync` first, with Step 4's output checks — it fast-forwards
+     the trunk and cascade-rebases the rest, replacing the manual rebase.
    - Never `gh stack merge` or `modify`; `unstack`/`delete` needs an explicit ask. Never run a
-     bare interactive subcommand — `submit`, `checkout`, `switch`, `view` open an editor or
-     pager and hang. Use `--auto`, an explicit argument, or `--json`.
+     form that opens a prompt, picker, or full-screen UI — it blocks the terminal indefinitely.
    - `gh stack` unavailable here (exit 9, unknown command) → stop and tell the user. The spec
      was planned as a stack; switching to sequential is a header change, not a mid-phase
      improvisation.
@@ -179,8 +183,11 @@ phase, under these rules only:
 
 1. **Stacked:** `gh stack sync` — fetches, fast-forwards the trunk, cascade-rebases every
    remaining phase onto it, pushes, syncs PR state. That one command replaces pull-and-rebase;
-   don't also rebase by hand. It aborts without pushing on divergence — surface that rather
-   than forcing it.
+   don't also rebase by hand. Exit 0 doesn't mean it synced:
+   - Output contains `Sync aborted` → local and remote stacks diverged and nothing changed.
+     Stop and surface both chains; which version wins is the user's call.
+   - Exit 3 → rebase conflict, every branch already restored. Stop, report it, and run
+     `gh stack rebase` to reproduce and resolve only on the user's go-ahead.
    **Sequential:** checkout the integration branch, `git pull`.
 2. Ask before deleting the merged phase branch (local + remote). Only after a yes: `gh stack
    sync --prune` (stacked) or delete it directly (sequential).
@@ -214,6 +221,8 @@ follows from it. The excuse is the tell.
 | "`submit` pushes branches I didn't work on" | That's how the stack updates; earlier phases are no-ops. Say so in the ask. |
 | "`--auto --open` does it in one command" | `--auto` can't carry a description and `--open` publishes the whole stack. The checklist lane is what the PR is for. |
 | "While editing PRs I'll fix the earlier ones too" | This phase's PR only. Earlier descriptions may be the user's own edits. |
+| "`sync` exited 0, so the stack is synced" | A diverged stack also exits 0, having changed nothing. Check for `Sync aborted`. |
+| "`sync` hit a conflict, I'll just resolve it" | `sync` already restored every branch. Resolving rewrites phase branches; ask first. |
 | "`gh stack modify` would fix this tangle" | Restructuring is spec-plan's job; `modify` desyncs EXECUTION.md from its branches. |
 | "All PRs approved, `gh stack merge` lands them" | Never. Merging is the user's, one phase at a time; that command is all-or-nothing. |
 | "Too tedious to run, I'll defer it" | `[~]` is for environment blocks with substitute evidence. Effort is not a block. |

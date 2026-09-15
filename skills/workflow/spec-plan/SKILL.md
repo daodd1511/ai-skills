@@ -63,11 +63,14 @@ section mapping the specs root (`../SETUP.md`); the rules themselves never go th
 5. Resolve the **integration branch** — the rulebook's branch model names it, otherwise
    `git branch` for the convention in use. Name it explicitly in EXECUTION.md; never
    hardcode an assumption.
-6. **Probe `gh stack`** — the default branch model depends on it. `gh stack view --json` at
-   the repo root, read the exit code: `2` (not in a stack) means the command works and the
-   repo has stacked PRs enabled → **stacked**. `9` ("not enabled for repository"), an
-   unknown-command error from an older `gh`, or a non-GitHub remote → **sequential**; say
-   which of those it was rather than silently downgrading. The user may ask for sequential
+6. **Probe `gh stack`** — the default branch model depends on it. Two read-only checks:
+   `gh stack --version` (fails → the extension isn't installed), then
+   `gh api 'repos/{owner}/{repo}/stacks' --silent` (`gh` fills in the current repo). Both
+   succeed → **stacked**. A 404 (stacked PRs not enabled for this repository), a missing
+   extension, or a non-GitHub remote → **sequential**; say which of those it was rather than
+   silently downgrading. Never probe with `gh stack view --json`: it exits 2 on any branch
+   outside a stack without asking GitHub whether the feature is on, so a repo without it
+   gets planned as a stack and fails at the first push. The user may ask for sequential
    outright. Record the resolved model in EXECUTION.md's header.
 
 ## Step 1 — Surface ambiguity before phasing anything
@@ -187,8 +190,8 @@ which predate v2 and carry stale conventions:
 
 Spec: [PLAN.md](PLAN.md). Rulebook: `specs/RULEBOOK.md`.
 Integration branch: `<resolved-branch>`. Branch model: <stacked via `gh stack` (default) |
-sequential — `<why: gh stack unavailable (exit 9 / old gh / non-GitHub remote) | user
-asked>`>.
+sequential — `<why: gh stack unavailable (stacks API 404 / extension missing / non-GitHub
+remote) | user asked>`>.
 
 ## STATUS
 
