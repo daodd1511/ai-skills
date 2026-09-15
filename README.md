@@ -70,6 +70,10 @@ the OpenAI Codex CLI (`codex exec`). Self-authored, packaged as a plugin
 
 - **caveman**, **frontend-design** — these came from marketplaces/official
   Anthropic skill packages, not authored here.
+- **gh-stack** — GitHub maintains it in `github/gh-stack`, versioned with the
+  CLI it documents. The spec workflow defers to it for `gh stack` command
+  mechanics and falls back to `--help` when it is missing. Installed with
+  `gh skill`, not symlinked; see Bootstrap.
 - **settings.json / config.toml / auth.json** — secrets and machine-specific
   paths; never committed.
 
@@ -78,7 +82,14 @@ the OpenAI Codex CLI (`codex exec`). Self-authored, packaged as a plugin
 ```
 git clone <repo-url> ~/dev/personal/ai-skills
 ~/dev/personal/ai-skills/bootstrap.sh
+gh skill install github/gh-stack gh-stack --scope user --agent claude-code
+gh skill install github/gh-stack gh-stack --scope user --agent codex
 ```
+
+The last two install GitHub's `gh-stack` skill into `~/.claude/skills` and
+`~/.agents/skills`. Updates land without review and `gh skill update` shows
+no diff: run `gh skill update gh-stack --dry-run` to see whether one is
+available, update, then read the changed files before relying on them.
 
 Reads `links.txt` and symlinks each repo path into its install path.
 Idempotent — safe to re-run. If an install path already holds a real file
