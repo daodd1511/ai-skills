@@ -13,6 +13,11 @@
 !codex/AGENTS.md
 !skills/**
 
+# Local-only: the skill eval harness. Stays off the remote — it carries fixtures,
+# agent transcripts and run output. Ignoring the directory also stops the unanchored
+# !README.md / !.gitignore rules above from re-including files inside it.
+evals/
+
 # Defensive: never allow these even if a future rule accidentally matches them.
 *.sqlite
 *.sqlite-*
