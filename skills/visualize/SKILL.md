@@ -21,8 +21,12 @@ like a bar chart or a line chart?"
 4. **Say what you picked, and why, in one line** before you build. Use the form's proper
    name: "Slope chart — it shows each service's before/after and which ones regressed."
    This is deliberate: it gives the user the vocabulary to ask for it directly next time.
-5. **Build one self-contained HTML file.** See Output below.
-6. **Open it** with `open <file>` (macOS) and tell the user the path.
+5. **Build one self-contained HTML file.** See Output below. For node-and-edge diagrams,
+   read `references/diagrams.md` first: you write a JSON spec, and `scripts/build.mjs`
+   validates it and inlines the renderer.
+6. **Check it.** For node-and-edge diagrams, run `scripts/check.mjs` and look at the
+   screenshots it saves. Fix what it reports before you open the page.
+7. **Open it** with `open <file>` (macOS) and tell the user the path.
 
 ## Choosing the form — quantitative
 
@@ -48,19 +52,34 @@ Composite pages: a KPI row (3–5 big numbers) on top, then the charts that expl
 Most of what needs illustrating is not numeric. These are inline SVG or styled HTML —
 never ASCII art.
 
-| The question is about | Form |
-|---|---|
-| How a request or job moves through a system | Flow diagram, left-to-right, one box per stage |
-| How components relate | Boxes-and-arrows architecture diagram, grouped by layer |
-| Order of events over time | Horizontal timeline, or a Gantt bar per phase |
-| Who calls whom, in what order | Sequence diagram (lifelines with numbered arrows) |
-| Comparing 3+ options against shared criteria | Comparison table, criteria as rows, options as columns, verdict row last |
-| Trade-offs between two axes | 2×2 quadrant with the options plotted |
-| Branching logic or a decision | Decision tree, yes/no branches labeled |
-| Nesting or containment | Nested boxes, not an indented list |
-| State machine | State nodes with labeled transition arrows |
-| Code with commentary | Code block with numbered margin annotations |
-| Before / after a change | Side-by-side panes, differences highlighted |
+| The question is about | Form | Spec `type` |
+|---|---|---|
+| How a request or job moves through stages | Flow diagram | `flow` |
+| Which person or team does each step of a process | Swimlane flow | `flow` with `lanes` |
+| How components relate | Architecture diagram, grouped by boundary | `architecture` |
+| Who calls whom, in what order | Sequence diagram | `sequence` |
+| What states one entity moves through, and on which events | State machine | `state` |
+| Branching logic or a decision | Decision tree | `tree` |
+| What must build, deploy, or run before what | Dependency graph | `dag` |
+| Order of events over time | Horizontal timeline, or a Gantt bar per phase | |
+| Comparing 3+ options against shared criteria | Comparison table, criteria as rows, options as columns, verdict row last | |
+| Trade-offs between two axes | 2×2 quadrant with the options plotted | |
+| Nesting or containment | Nested boxes, not an indented list | |
+| Code with commentary | Code block with numbered margin annotations | |
+| Before / after a change | Side-by-side panes, differences highlighted | |
+
+Forms with a spec `type` are node-and-edge diagrams; build them from a spec, as
+`references/diagrams.md` describes. When two of them seem to fit, choose this way:
+
+- **Sequence or flow:** use a sequence diagram when two or more actors exchange messages
+  and their order matters. Use a flow when the stages matter more than who performs them.
+- **State machine or flow:** use a state machine when one entity returns to states it
+  was in before, such as retries or reopened tickets.
+- **Flow or swimlane flow:** add lanes only when handoffs between owners are the point.
+- **Decision tree or decision table:** use a table when conditions combine rather than
+  nest, when subtrees repeat, or when the tree would go past four levels.
+- **Architecture or dependency graph:** use a dependency graph when the question is
+  ordering (what must exist first), not how components talk at runtime.
 
 If the answer is genuinely a paragraph of prose, write the paragraph. A diagram that
 restates a sentence is worse than the sentence.
@@ -69,8 +88,10 @@ restates a sentence is worse than the sentence.
 
 One HTML file, self-contained: no CDN links, no external fonts, no network calls. It must
 render offline, from a file path, forever. Charts are inline SVG that you generate — do
-not pull in a charting library. Save to the current workspace if it has an obvious home
-for it, otherwise the OS temp directory.
+not pull in a charting library. The one exception is node-and-edge diagrams: the build
+script inlines this skill's renderer (and its vendored layout library) into the page, so
+the page stays offline. Save to the current workspace if it has an obvious home for it,
+otherwise the OS temp directory.
 
 Keep the UI plain. System font stack, generous whitespace, one accent color, dark text on
 light background. Legible beats fancy. Spend the effort on the data, not the chrome. If
@@ -91,6 +112,8 @@ parameter. Never for decoration.
 ## Never
 
 - ASCII or Unicode box-drawing diagrams. You are writing HTML; use SVG.
+- Hand-placed SVG coordinates for a node-and-edge diagram. Write the spec.
+- Opening a node-and-edge diagram the check has not passed without saying what failed.
 - 3D, drop shadows on data marks, gradients on bars, rainbow palettes.
 - A truncated y-axis on a bar chart. Bars start at zero.
 - Dual y-axes — split into two stacked charts sharing an x-axis.
