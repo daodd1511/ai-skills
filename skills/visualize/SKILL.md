@@ -18,15 +18,19 @@ like a bar chart or a line chart?"
    of looking? Everything below follows from this. If the question is genuinely unclear
    and two readings would produce different pages, ask — one question, then proceed.
 3. **Pick the form** from the tables below, driven by the question and the shape of the data.
-4. **Say what you picked, and why, in one line** before you build. Use the form's proper
-   name: "Slope chart — it shows each service's before/after and which ones regressed."
-   This is deliberate: it gives the user the vocabulary to ask for it directly next time.
-5. **Build one self-contained HTML file.** See Output below. For node-and-edge diagrams,
+4. **Pick the layout and theme** from `references/page.md`. Read it before every build;
+   it also sets how much text the page may carry.
+5. **Say what you picked, and why, in one line** before you build. Use the proper names:
+   "Slope chart in a side-by-side layout, Report theme — it shows each service's
+   before/after and which ones regressed." This is deliberate: it gives the user the
+   vocabulary to ask for it directly next time.
+6. **Build one self-contained HTML file.** See Output below. For node-and-edge diagrams,
    read `references/diagrams.md` first: you write a JSON spec, and `scripts/build.mjs`
    validates it and inlines the renderer.
-6. **Check it.** For node-and-edge diagrams, run `scripts/check.mjs` and look at the
-   screenshots it saves. Fix what it reports before you open the page.
-7. **Open it** with `open <file>` (macOS) and tell the user the path.
+7. **Check it.** For node-and-edge diagrams, run `scripts/check.mjs` and look at the
+   screenshots it saves, including the dark-mode one. Fix what it reports before you
+   open the page.
+8. **Open it** with `open <file>` (macOS) and tell the user the path.
 
 ## Choosing the form — quantitative
 
@@ -81,8 +85,10 @@ Forms with a spec `type` are node-and-edge diagrams; build them from a spec, as
 - **Architecture or dependency graph:** use a dependency graph when the question is
   ordering (what must exist first), not how components talk at runtime.
 
-If the answer is genuinely a paragraph of prose, write the paragraph. A diagram that
-restates a sentence is worse than the sentence.
+Default to a picture. When the content has no numbers and no structure, use a
+key-number tile, an annotated example, labeled cards, or a before/after pane rather than
+a paragraph. A diagram that only restates a sentence adds nothing; draw what the sentence
+leaves implicit, or use one of those components.
 
 ## Output
 
@@ -93,10 +99,11 @@ script inlines this skill's renderer (and its vendored layout library) into the 
 the page stays offline. Save to the current workspace if it has an obvious home for it,
 otherwise the OS temp directory.
 
-Keep the UI plain. System font stack, generous whitespace, one accent color, dark text on
-light background. Legible beats fancy. Spend the effort on the data, not the chrome. If
-the `dataviz` skill is available, follow its palette and mark rules for anything with axes
-— it owns chart styling; this skill owns which chart.
+Build the page from the layout and theme you picked in `references/page.md`. Pictures
+lead and words label: every section has a visual, and captions stay under about 30
+words. Legible beats fancy, and the theme sets the page's character, not the data's. If
+the `dataviz` skill is available, follow its palette and mark rules for anything with
+axes — it owns chart styling; this skill owns which chart.
 
 Every page carries:
 - A title, and a one-line summary of the finding directly under it — the takeaway in
@@ -105,7 +112,8 @@ Every page carries:
 - A source line: where the data came from, and when it was pulled.
 - Explicit gaps: if data is missing or estimated, label it on the page.
 
-Responsive down to phone width, and legible when printed. Add interactivity only when it
+Responsive down to phone width, readable in light and dark mode, and legible when
+printed. Add interactivity only when it
 answers a question the static page cannot — a filter over many series, a slider over a
 parameter. Never for decoration.
 
@@ -120,4 +128,5 @@ parameter. Never for decoration.
 - Pie charts with more than three slices.
 - A legend when direct labels on the marks would do.
 - Color as the only carrier of meaning; pair it with position, label, or shape.
-- Charting a single data point, or a table of three numbers. Write the sentence.
+- Charting a single data point, or a chart of three numbers. Use key-number tiles.
+- A section of prose with no visual, or a caption that has grown into a paragraph.

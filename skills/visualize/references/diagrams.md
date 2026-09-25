@@ -170,7 +170,9 @@ say the check did not run; do not claim the diagram is clean.
 - **Grounding.** For diagrams derived from code, set `source` on the nodes and edges you
   read, and `inferred: true` on everything you deduced. Never present an inferred
   connection as read.
-- **Styling.** The runtime owns colors, shapes, and fonts for these diagrams. Do not add
+- **Styling.** The runtime owns shapes and sizes. Diagram colors follow the page's theme
+  tokens on `:root` (see `page.md`), and diagram text uses the page font. To recolor
+  only the diagrams, set a `--vg-*` token such as `--vg-accent` on `:root`. Do not add
   CSS for `.vg` classes.
 
 ## Fixing check errors
