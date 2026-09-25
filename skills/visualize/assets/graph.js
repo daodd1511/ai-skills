@@ -6,18 +6,38 @@
 
   const NS = "http://www.w3.org/2000/svg";
   const LINE = 17;
-  const COLOR = { fg: "#1f2328", line: "#57606a", muted: "#8c959f", accent: "#0550ae", bg: "#ffffff", subtle: "#f6f8fa", border: "#d0d7de", issue: "#cf222e" };
+  // Each diagram color reads the page's --vg-* token, falling back to the page's theme
+  // tokens (see references/page.md), then to a built-in default per color scheme.
+  const TOKENS = {
+    fg: ["--fg", "#1f2328", "#e6edf3"],
+    line: ["--muted", "#57606a", "#9198a1"],
+    muted: [null, "#8c959f", "#6e7681"],
+    accent: ["--accent", "#0550ae", "#58a6ff"],
+    bg: ["--bg", "#ffffff", "#0d1117"],
+    subtle: ["--surface", "#f6f8fa", "#161b22"],
+    border: ["--border", "#d0d7de", "#30363d"],
+    tint: ["--accent-soft", "#eaf1fb", "#132339"],
+    activation: ["--surface", "#eaeef2", "#21262d"],
+    issue: [null, "#cf222e", "#ff7b72"],
+  };
+  const tokenBlock = (scheme) => Object.entries(TOKENS)
+    .map(([k, [page, light, dark]]) => {
+      const fallback = scheme === "dark" ? dark : light;
+      return `--vg-${k}-d:${page ? `var(${page},${fallback})` : fallback}`;
+    }).join(";");
+  const COLOR = Object.fromEntries(Object.keys(TOKENS).map((k) => [k, `var(--vg-${k},var(--vg-${k}-d))`]));
   const DEFAULT_DIR = { flow: "LR", dag: "LR", state: "LR", architecture: "TB", tree: "TB" };
   const CHECK_MODE = /[?&]vg-check\b/.test(location.search);
 
   const CSS = `
+:where(:root){${tokenBlock("light")}}
 .vg{margin:1.5rem 0}
 .vg-scroll{overflow-x:auto}
-.vg svg{display:block;max-width:none;height:auto;font-size:13px;color:${COLOR.fg};background:${COLOR.bg}}
+.vg svg{display:block;margin-inline:auto;max-width:none;height:auto;font-size:13px;color:${COLOR.fg};background:${COLOR.bg}}
 .vg text{fill:currentColor;dominant-baseline:central}
 .vg-shape{fill:${COLOR.bg};stroke:${COLOR.line};stroke-width:1.25}
 .kind-external>.vg-shape{fill:${COLOR.subtle}}
-.kind-outcome>.vg-shape{fill:#eaf1fb}
+.kind-outcome>.vg-shape{fill:${COLOR.tint}}
 .kind-initial>.vg-shape,.kind-final>.vg-inner{fill:${COLOR.fg};stroke:none}
 .vg-node.inferred>.vg-shape{stroke-dasharray:4 3}
 .vg-node.emphasis>.vg-shape{stroke:${COLOR.accent};stroke-width:2}
@@ -34,12 +54,16 @@
 .vg-lane{fill:${COLOR.bg};stroke:${COLOR.border}}
 .vg-lane.alt{fill:${COLOR.subtle}}
 .vg-lifeline{stroke:${COLOR.muted};stroke-dasharray:4 4}
-.vg-activation{fill:#eaeef2;stroke:${COLOR.line}}
+.vg-activation{fill:${COLOR.activation};stroke:${COLOR.line}}
 .vg-frame{fill:none;stroke:${COLOR.muted}}
 .vg-frame-tab{fill:${COLOR.subtle};stroke:${COLOR.muted}}
 .vg-frame-kind{font-weight:600}
 .vg-else{stroke:${COLOR.muted};stroke-dasharray:4 3}
 .vg-issue{fill:none;stroke:${COLOR.issue};stroke-width:2}
+.vg-mk-arrow{fill:${COLOR.line}}
+.vg-mk-accent{fill:${COLOR.accent}}
+.vg-mk-muted{fill:${COLOR.muted}}
+.vg-mk-open{fill:none;stroke:${COLOR.line};stroke-width:1.5}
 `;
 
   // ---------- DOM helpers ----------
@@ -96,14 +120,15 @@
 
   function addMarkers(svg, prefix) {
     const defs = el("defs", {}, svg);
-    const make = (name, fill, open) => {
+    // Marker colors come from CSS classes so they follow the page's theme tokens.
+    const make = (name, open) => {
       const m = el("marker", { id: `${prefix}-${name}`, viewBox: "0 0 10 10", refX: 9.5, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: "userSpaceOnUse", orient: "auto-start-reverse" }, defs);
-      el("path", open ? { d: "M1,1 L9.5,5 L1,9", fill: "none", stroke: fill, "stroke-width": 1.5 } : { d: "M0,0 L10,5 L0,10 z", fill }, m);
+      el("path", { class: `vg-mk-${name}`, d: open ? "M1,1 L9.5,5 L1,9" : "M0,0 L10,5 L0,10 z" }, m);
     };
-    make("arrow", COLOR.line);
-    make("accent", COLOR.accent);
-    make("muted", COLOR.muted);
-    make("open", COLOR.line, true);
+    make("arrow");
+    make("accent");
+    make("muted");
+    make("open", true);
     return (edge) => {
       const name = edge.emphasis ? "accent" : edge.inferred ? "muted" : edge.style === "return" ? "open" : "arrow";
       return `url(#${prefix}-${name})`;
@@ -317,7 +342,8 @@
     const layout = spec.type === "tree" ? treeLayout : dagreLayout;
     const preferred = spec.direction || DEFAULT_DIR[spec.type];
     let lay = layout(spec, nodes, labels, preferred);
-    if (!spec.direction && lay.W > avail) {
+    // Flip only when the preferred layout would not fit even at the 80% shrink limit.
+    if (!spec.direction && lay.W * 0.8 > avail) {
       const alt = layout(spec, nodes, labels, preferred === "LR" ? "TB" : "LR");
       if (alt.W < lay.W * 0.8) lay = alt;
     }
@@ -777,7 +803,10 @@
   }
 
   const style = document.createElement("style");
-  style.textContent = CSS;
+  // Dark defaults apply only when the page opts into dark mode, so a light-only page
+  // never gets a dark diagram on a white background.
+  const pageSupportsDark = /\bdark\b/.test(getComputedStyle(document.documentElement).colorScheme || "");
+  style.textContent = CSS + (pageSupportsDark ? `@media (prefers-color-scheme:dark){:where(:root){${tokenBlock("dark")}}}` : "");
   document.head.appendChild(style);
   renderAll();
 

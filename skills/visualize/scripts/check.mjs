@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Render a built page in headless Chrome at desktop and phone widths, report the
 // collision check the graph runtime writes into the page, and save full-page
-// screenshots with issues outlined in red.
+// screenshots with issues outlined in red, plus one desktop screenshot in dark mode.
 //
 // Usage: node check.mjs <page.html> [--out <dir>]
 // Exit: 0 clean (warnings may print), 1 errors found, 2 usage or Chrome unavailable.
@@ -13,7 +13,11 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const WIDTHS = [1280, 400];
+const RUNS = [
+  { width: 1280, scheme: "light" },
+  { width: 400, scheme: "light" },
+  { width: 1280, scheme: "dark" },
+];
 const RESULT_TIMEOUT_MS = 8000;
 const TOTAL_TIMEOUT_MS = 90000;
 const CANDIDATES = [
@@ -100,8 +104,9 @@ function connect(url) {
   });
 }
 
-async function inspect(cdp, session, url, width) {
+async function inspect(cdp, session, url, { width, scheme }) {
   await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: width < 600 }, session);
+  await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: scheme }] }, session);
   const loaded = cdp.once("Page.loadEventFired");
   await cdp.send("Page.navigate", { url }, session);
   await loaded;
@@ -169,16 +174,19 @@ async function main() {
     const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank" });
     const { sessionId } = await cdp.send("Target.attachToTarget", { targetId, flatten: true });
     await cdp.send("Page.enable", {}, sessionId);
-    for (const width of WIDTHS) {
-      const result = await inspect(cdp, sessionId, url, width);
+    for (const run of RUNS) {
+      const result = await inspect(cdp, sessionId, url, run);
       if (!result) {
-        console.log(`[${width}px] error: no check result in page; run build.mjs first, or the runtime failed to load`);
+        console.log(`[${run.width}px] error: no check result in page; run build.mjs first, or the runtime failed to load`);
         errors++;
         continue;
       }
-      const shotPath = join(outDir, `${name}-${width}.png`);
+      const suffix = run.scheme === "dark" ? "-dark" : "";
+      const shotPath = join(outDir, `${name}-${run.width}${suffix}.png`);
       writeFileSync(shotPath, result.png);
-      errors += print(width, result.report, shotPath);
+      // Layout does not depend on the color scheme, so the dark run only adds a screenshot.
+      if (run.scheme === "dark") console.log(`[${run.width}px dark] screenshot: ${shotPath}`);
+      else errors += print(run.width, result.report, shotPath);
     }
     cdp.close();
   } finally {
