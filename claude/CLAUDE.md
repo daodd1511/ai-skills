@@ -31,8 +31,9 @@
 
 ## Writing rules
 These govern prose: docs, PR text, and chat replies. Commit messages follow
-the `terse-commit` skill instead. Never rewrite code, commands, identifiers,
-or quoted text to satisfy a prose rule.
+the `terse-commit` skill and code comments follow **Code comments** instead.
+Never rewrite code, commands, identifiers, or quoted text to satisfy a prose
+rule.
 
 1. Lead with the reader's goal, the answer, or the decision. Address the reader
    as "you" in instructions, and put a condition before the action it governs.
@@ -67,6 +68,42 @@ For documents, also:
 
 Before delivering a document — doc, spec, PR description — review it
 against these rules. In chat, apply them as you write; no separate pass.
+
+## Code comments
+Write each comment for a maintainer who opens this file later and never saw
+the task, ticket, or conversation that produced it. A comment must stay true
+and useful after the task is forgotten.
+
+* A doc comment on a declaration (field, function, class, type) says what the
+  thing is or does: the contract its users rely on. It does not say how it
+  works inside or why it was added. A field gets one short sentence.
+* On a function, document only what the signature does not already say: the
+  meaning of inputs and the return value, side effects, thrown errors, units.
+* An inline comment inside a body is the exception. Write one only for a
+  constraint the code cannot show, such as a vendor or protocol quirk. If a
+  clearer name, type, or extracted function would remove the need, change
+  the code instead.
+* Never record change history: no "added for", "new", "now", "instead of",
+  ticket IDs, or references to the old implementation or the current task.
+  That belongs in the commit message or PR.
+* Match the file. If neighboring declarations have no comments, add none; if
+  they have one-line doc comments, write one line in the same style.
+* No narration (`// Step 1`, `// Loop over users`), section banners, or
+  commented-out code. A TODO needs an owner or an issue link.
+
+```ts
+// Bad: task context the next reader cannot use
+/** Tracks who changed the record. Added for the audit log feature; set in
+ *  updateRecord() whenever a user saves from the edit dialog. */
+modifiedBy: string;
+
+// Good: what the field holds
+/** Person who last modified this record. */
+modifiedBy: string;
+```
+
+Before you finish a change, reread every comment you added and delete or
+shorten any that breaks these rules.
 
 ## Git Conventions
 * Use the `terse-commit` skill to draft every commit message.
