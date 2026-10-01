@@ -4,7 +4,8 @@ description: >
   React engineering standards. Use when writing or reviewing React code:
   components, hooks, data fetching, forms, state management, component
   architecture (DTO/mapper layers), performance, or accessibility in React
-  apps. Covers React 19 (Compiler, actions, Suspense) with TypeScript.
+  apps. Covers React 19 (Compiler, actions, Suspense) with TypeScript, plus
+  React Hook Form, TanStack Query, MUI, React Router, and Luxon.
 ---
 
 # React Frontend Developer
@@ -12,6 +13,24 @@ description: >
 **Precedence:** project instructions (AGENTS.md / CLAUDE.md) and the touched
 codebase's existing patterns always override this skill. These are defaults
 for when the project doesn't say otherwise.
+
+**Versions:** a rule tagged with a version — `(v7+)`, `(v7.5+)`,
+`(resolvers v5.1+)` — applies only from that version of the named library,
+or of the file's main library when none is named. Check `package.json`
+before applying it. Untagged rules apply to every version the file covers.
+
+## Library references
+
+Read the matching reference when `package.json` lists the dependency and the
+task touches that library:
+
+| Dependency | Reference |
+|---|---|
+| `react-hook-form` | `references/forms-rhf.md` |
+| `@mui/material` | `references/mui.md` |
+| `react-router` / `react-router-dom` | `references/router.md` |
+| `luxon` | `references/dates-luxon.md` |
+| `@tanstack/react-query` (new data-layer slice) | `references/architecture.md` |
 
 ## Components
 
@@ -57,8 +76,10 @@ for when the project doesn't say otherwise.
   server cache → query library; global client state → the project's store
   (Zustand/Redux); local UI state → `useState`/`useReducer`;
   URL state → the router.
-- Mutations: prefer the query library's mutation API with invalidation, or
-  React 19 actions (`useActionState`, `useOptimistic`) for form flows.
+- Mutations: use the query library's mutation API with invalidation. Use
+  React 19 actions (`useActionState`, `useOptimistic`) only for forms that
+  don't use a form library; with React Hook Form, submit through
+  `handleSubmit` → `mutateAsync`, never both.
 - Loading/error UI: prefer Suspense boundaries + error boundaries at
   route/feature level over per-component spinner flags, where the data layer
   supports it.
@@ -68,8 +89,9 @@ for when the project doesn't say otherwise.
 - Three layers, never crossed: UI (components/hooks — no API calls, no raw
   DTOs) → domain (models, pure business functions) → data (API clients, zod
   DTO schemas, mappers).
-- DTOs validated with zod (`z.infer` for types; zod 4 idioms — `z.email()`,
-  not `z.string().email()`); safe-parse at the boundary, log and return
+- DTOs validated with zod (`z.infer` for types). (zod v4+) Use top-level
+  format schemas — `z.email()`, not the deprecated `z.string().email()`;
+  on zod 3 only the latter exists. Safe-parse at the boundary, log and return
   `null`/filter on failure rather than throwing mid-render.
 - Mappers are plain functions/objects that own all DTO ↔ domain
   transformation; domain models are `readonly`.
@@ -87,8 +109,9 @@ for when the project doesn't say otherwise.
 ## Performance
 
 - Core Web Vitals targets: LCP < 2.5s, INP < 200ms, CLS < 0.1.
-- Route-level code splitting: `React.lazy` + `Suspense` for heavy
-  routes/features; never eagerly load what initial render doesn't need.
+- Route-level code splitting: with a data router, use the route's `lazy`
+  property (see `references/router.md`); otherwise `React.lazy` +
+  `Suspense`. Never eagerly load what initial render doesn't need.
 - Images: compressed, right format, explicit `width`/`height` (CLS).
 - Long lists: paginate or virtualize — but measure first; virtualization of
   heavy rows can be worse than pagination.
@@ -105,12 +128,28 @@ for when the project doesn't say otherwise.
   icon-only controls get `aria-label`.
 - Manage focus in React flows: move focus into opened dialogs and back on
   close, to headings/status on route change; `aria-live` for async updates.
+  A component library's modal (MUI `Dialog`) already traps and restores
+  focus — don't re-implement it.
 - All interactive elements keyboard-reachable and operable.
 
 ## Forms
 
-- Use the project's form library (commonly React Hook Form + zod resolver);
-  uncontrolled inputs by default, validation schema shared with the data
-  layer where shapes align.
-- With React Hook Form, prefer `useWatch` over `watch` (fewer re-renders,
-  React Compiler compatible).
+- Use the project's form library (commonly React Hook Form + zod resolver).
+  Details: `references/forms-rhf.md`.
+- Give each form its own schema and a form → domain mapper. Form values
+  (strings, empty fields, date objects) rarely match the wire shape, so
+  don't reuse the DTO schema.
+- Native inputs: uncontrolled (`register`). Component-library inputs (MUI
+  and similar): `Controller`, because `register`'s ref doesn't reach the
+  underlying `<input>`.
+
+## Testing
+
+- Test behavior through the DOM with Testing Library: query by role and
+  label, drive interactions with `userEvent.setup()`, not `fireEvent`.
+- Mock the network with MSW, not by mocking modules or the API client. Tests
+  then exercise the real data layer, mappers included.
+- Give each test a fresh `QueryClient` with `retry: false`; a shared client
+  leaks cache between tests and retries turn failures into timeouts.
+- Build fixtures with factories (faker, if installed) that return valid
+  DTOs; override only the fields the test is about.
