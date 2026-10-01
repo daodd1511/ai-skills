@@ -26,9 +26,11 @@ claude/
   agents/   - subagent definitions, symlinked into ~/.claude/agents/<name>.md
   plugins/  - authored plugins (own .claude-plugin manifest), symlinked
               into ~/.claude/skills/<name>
-  CLAUDE.md - symlinked into ~/.claude/CLAUDE.md
+  CLAUDE.md - global instructions (working style, git, writing, code
+              comments), symlinked into ~/.claude/CLAUDE.md
 codex/
-  AGENTS.md - symlinked into ~/.codex/AGENTS.md
+  AGENTS.md - Codex copy of the global instructions, symlinked into
+              ~/.codex/AGENTS.md
 ```
 
 ## What's in here
@@ -40,10 +42,10 @@ codex/
 | teach | Teach a concept within the current workspace |
 | terse-commit | Ultra-compressed commit message generator |
 | angular-frontend-developer | Angular frontend scaffold |
-| react-frontend-developer | React frontend scaffold |
+| react-frontend-developer | React 19 standards, plus references for React Hook Form, TanStack Query, MUI, React Router, and Luxon, read only when `package.json` lists the library |
 | vue-frontend-developer | Vue frontend scaffold |
 | fresh-review | Fresh-context read-only review of a risky change, on request |
-| visualize | Pick the right visual form for data/findings, render as self-contained HTML |
+| visualize | Pick the right visual form for data/findings, render as self-contained HTML with a chosen layout and theme. Node-and-edge diagrams come from a JSON spec: `scripts/build.mjs` inlines the renderer and vendored dagre 3.1.1 (MIT); `scripts/check.mjs` screenshots the page and needs Node 22+ and Chrome |
 | bro | Restate the last message in plain language, no jargon (`/bro` only) |
 | eli5 | Explain a topic to a total beginner as a self-contained HTML page: big pictures, few words |
 
