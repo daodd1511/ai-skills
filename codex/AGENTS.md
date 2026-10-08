@@ -33,7 +33,8 @@
 These govern prose: docs, PR text, and chat replies. Commit messages follow
 the `terse-commit` skill and code comments follow **Code comments** instead.
 Never rewrite code, commands, identifiers, or quoted text to satisfy a prose
-rule.
+rule. The sentence-level rules adapt ASD-STE100 (Simplified Technical
+English) but not its controlled dictionary: rule 4 keeps terms of art.
 
 1. Lead with the reader's goal, the answer, or the decision. Address the reader
    as "you" in instructions, and put a condition before the action it governs.
@@ -42,22 +43,38 @@ rule.
    rather than papering over it.
 3. Cut words, never claims. If removing a word removes a metric, a hedge,
    a conclusion, or normative force (automatically, must, only, never),
-   keep the word.
+   keep the word. Never drop articles or verbs to save space: write
+   "Restart the service," not "Restart service."
 4. Prefer the exact word for the audience. Keep terms of art, define unfamiliar
-   terms and abbreviations on first use, and use one term for one concept.
-5. Avoid stock metaphors, idioms, colloquialisms, and culturally specific
+   terms and abbreviations on first use, and use one term for one concept and
+   one meaning for one word. Prefer a single verb to a phrasal verb when it is
+   as exact: "configure," not "set up."
+5. Write one idea per sentence and one topic per paragraph. Split a sentence
+   where it joins two ideas.
+6. Keep verbs and nouns simple. Prefer the simple present, past, and future
+   tenses; do not use an `-ing` form as the main verb. Break up a cluster of
+   more than three nouns: "the limit on token refresh retries," not "the token
+   refresh retry limit."
+7. Avoid stock metaphors, idioms, colloquialisms, and culturally specific
    references. Keep a figure of speech only when it adds meaning without
    making the text harder to understand or translate.
-6. Write inclusively. Avoid violent, oppressive, or ableist metaphors and
+8. Write inclusively. Avoid violent, oppressive, or ableist metaphors and
    unnecessary human or biological labels for technology. Context matters:
    research a questionable term, then choose a neutral, precise alternative.
-7. Break any of these rules sooner than write something ugly or less accurate.
+9. Break any of these rules sooner than write something ugly or less accurate.
 
 For documents, also:
 
 * Use sentence case and descriptive headings in a logical hierarchy.
+* Keep sentences to 20 words or fewer in procedures and 25 or fewer in
+  descriptions, and paragraphs to six sentences or fewer.
+* Write each procedure step as one imperative instruction. Combine two actions
+  in one step only when the reader must do them at the same time.
+* Start a warning with the command, then give the risk: "Back up the database
+  before you run the migration. The migration deletes the `sessions` table."
 * Use numbered lists for sequences and bullets for nonsequential items. Keep
   list items parallel and introduce a list when its purpose is not obvious.
+  Use a list instead of a sentence that strings together steps or conditions.
 * Write descriptive link text that makes sense out of context; avoid bare URLs,
   "click here," and repeated links to the same destination.
 * Format code-related text as code and labeled UI elements in bold.
@@ -76,9 +93,19 @@ and useful after the task is forgotten.
 
 * A doc comment on a declaration (field, function, class, type) says what the
   thing is or does: the contract its users rely on. It does not say how it
-  works inside or why it was added. A field gets one short sentence.
-* On a function, document only what the signature does not already say: the
-  meaning of inputs and the return value, side effects, thrown errors, units.
+  works inside or why it was added.
+* Document only what the name and type do not already say: what a value
+  means, units, side effects, thrown errors. If a linter or the file requires
+  a doc comment on every field, write one even when the name says everything,
+  and keep it to the shortest phrase that names the value: "Patient ID," not
+  "Patient profile identifier." Add a word only when it narrows the meaning:
+  "Patient verification status," not "Patient status."
+* Never restate the type. Mention `null`, `undefined`, or an optional field
+  only to say what that value means ("null until the first sync"), never just
+  that it can occur ("or null when absent").
+* Describe a parameter by its contract, not by what today's callers pass. If
+  `filters` accepts any supported filter, document it as "Filters to apply,"
+  not "Date range filter," even when the current task sends only a date range.
 * An inline comment inside a body is the exception. Write one only for a
   constraint the code cannot show, such as a vendor or protocol quirk. If a
   clearer name, type, or extracted function would remove the need, change
@@ -87,7 +114,7 @@ and useful after the task is forgotten.
   ticket IDs, or references to the old implementation or the current task.
   That belongs in the commit message or PR.
 * Match the file. If neighboring declarations have no comments, add none; if
-  they have one-line doc comments, write one line in the same style.
+  they have doc comments, use the same style and length.
 * No narration (`// Step 1`, `// Loop over users`), section banners, or
   commented-out code. A TODO needs an owner or an issue link.
 
@@ -100,6 +127,26 @@ modifiedBy: string;
 // Good: what the field holds
 /** Person who last modified this record. */
 modifiedBy: string;
+
+// Bad: restates the type and stretches a name into a definition
+/** Patient identity and verification metadata, or null when absent. */
+patientProfile: Readonly<{
+  /** Patient profile identifier. */
+  id: string;
+  /** Verification expiration timestamp, or null when absent. */
+  verificationExpiresAt: DateTime | null;
+}> | null;
+
+// Good: the shortest phrase that names each value
+/** Patient identity and verification metadata. */
+patientProfile: Readonly<{
+  /** Patient ID. */
+  id: string;
+  /** Patient verification status. */
+  status: PatientStatus;
+  /** Verification expiration time. */
+  verificationExpiresAt: DateTime | null;
+}> | null;
 ```
 
 Before you finish a change, reread every comment you added and delete or
