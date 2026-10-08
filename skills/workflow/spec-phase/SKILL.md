@@ -164,8 +164,8 @@ phase, under these rules only:
    - `gh pr ready <n>`.
 
    Sequential: one `gh pr create --base <integration-branch> --title '<title>' --body-file
-   <path>`. Either way the description must carry the phase's **Review checklist** lane, so
-   the user's manual verification happens before they merge. A diverged stack aborting the
+   <path>`. Either way the description says what the phase changed and why. It has no
+   validation or test-evidence section and no checkboxes. A diverged stack aborting the
    submit → surface it and stop, never retry interactively. The PR counts as open only after
    `gh pr ready`; with no CI item the phase is complete at that point — don't invent a
    checks-watching step.
@@ -219,7 +219,7 @@ follows from it. The excuse is the tell.
 | "Wait for phase 1's PR before starting phase 2" | Stacking is the default: `gh stack add` and keep going. Waiting is sequential mode only. |
 | "`git checkout -b` is the same as `gh stack add`" | The stack won't track it, so `submit` won't chain its PR and `sync` won't rebase it. |
 | "`submit` pushes branches I didn't work on" | That's how the stack updates; earlier phases are no-ops. Say so in the ask. |
-| "`--auto --open` does it in one command" | `--auto` can't carry a description and `--open` publishes the whole stack. The checklist lane is what the PR is for. |
+| "`--auto --open` does it in one command" | `--auto` can't carry a description and `--open` publishes the whole stack. The description is what the PR is for. |
 | "While editing PRs I'll fix the earlier ones too" | This phase's PR only. Earlier descriptions may be the user's own edits. |
 | "`sync` exited 0, so the stack is synced" | A diverged stack also exits 0, having changed nothing. Check for `Sync aborted`. |
 | "`sync` hit a conflict, I'll just resolve it" | `sync` already restored every branch. Resolving rewrites phase branches; ask first. |

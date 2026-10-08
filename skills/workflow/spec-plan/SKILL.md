@@ -93,8 +93,7 @@ capability file, every `MODIFIED`/`REMOVED` title must exist there. A colliding 
 usually means this feature contradicts an earlier one — stop and put it to the user, since
 that contradiction is invisible anywhere else. A `MODIFIED` with no entry means the backfill
 was skipped during the grill — stop and run it (evidence classes per rulebook), don't invent
-the requirement. Derive review-checklist items from the delta's scenarios: a `WHEN/THEN` pair
-converts to a manual verification step almost verbatim.
+the requirement.
 
 ## Step 2 — Derive phase boundaries
 
@@ -136,7 +135,7 @@ sessions, so phase 3's agent has no cheap way to learn what phase 2 named things
 this it guesses, and the guess surfaces as a red typecheck two phases later. Omit either line
 when genuinely empty.
 
-Gates come in **three lanes**, two agent-owed plus the user's:
+Gates come in **two lanes**, both agent-owed:
 
 - **Phase gate (hard, every phase)**: exactly two items, kept cheap because they run n times.
   - *Typecheck*: project-wide, never scoped — it has no runtime, fixtures, or services, and
@@ -159,9 +158,6 @@ Gates come in **three lanes**, two agent-owed plus the user's:
   specs do damage: fixtures, DI wiring, and serialized shapes carry no import edge, so
   dependency-aware selection misses them. Once at the end is one full run per spec, not per
   phase.
-- **Review checklist**: manual scenarios (browser walkthroughs, visual checks) the *user*
-  verifies at PR review; spec-phase copies the lane into the PR description. Never blocks
-  phase completion, never becomes agent debt.
 
 **CI is opt-in.** No `CI green on the … PR` item unless the user asks for CI gating on this
 spec. When they do it is a **spec gate** item (`- [ ] CI green on the final phase PR`), never
@@ -171,8 +167,8 @@ spec gates are the verdict.
 Write concrete command(s) into every gate item — the executing agent must not have to decide
 scope. Only write checks runnable in this environment; if an agent-owed check is foreseeably
 environment-blocked (credentials, a live service), say so now, and at execution time it
-becomes `[~]` with substitute evidence per the rulebook. Manual, agent-unrunnable checks
-belong in the review lane, never a gate.
+becomes `[~]` with substitute evidence per the rulebook. Leave manual, agent-unrunnable checks
+out of EXECUTION.md; never make them a gate.
 
 **Fresh-review decision.** Classify each phase from its planned scope using the rulebook's
 hard triggers, as exactly one line: `Fresh review: required — <trigger>` or `Fresh review:
@@ -218,12 +214,8 @@ Fresh review: <required — hard trigger | not required>
 - [ ] <project-wide typecheck command — not scoped to this phase>
 - [ ] <dependency-aware test command, e.g. `vitest related --run <changed files>`>
 
-**Review checklist (user, at PR review):**
-- [ ] <manual scenario>
-
 **On completion:** run the phase gate; run `fresh-review` when the recorded or actual-diff
-decision requires it; update STATUS + checkboxes; stop and ask before push/PR. Review
-checklist goes into the PR description.
+decision requires it; update STATUS + checkboxes; stop and ask before push/PR.
 
 ## Spec gate (hard — once, before the final phase's PR)
 

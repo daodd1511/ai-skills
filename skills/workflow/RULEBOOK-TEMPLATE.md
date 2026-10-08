@@ -134,8 +134,6 @@ root — fix the section, don't move rules into it. An agent that lands on a
   - **CI is opt-in.** Add a `CI green on the final phase PR` item to the spec gate only
     when the user asks for CI gating. Without that ask, the phase and spec gates are the
     verdict and no agent watches checks.
-  Manual verification scenarios are the **review checklist**, listed in the PR description
-  for the user to walk through before merging — they are the user's, not agent debt.
 - **Fresh review is conditional, not a universal gate.** Each phase records
   `Fresh review: required — <hard trigger>` or `Fresh review: not required` when planned.
   Require it for changes involving authentication/authorization, cryptography, secrets or
