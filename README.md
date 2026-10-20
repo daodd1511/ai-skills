@@ -41,6 +41,7 @@ codex/
 | handoff | Compact a conversation into a handoff doc |
 | teach | Teach a concept within the current workspace |
 | terse-commit | Ultra-compressed commit message generator |
+| pr-create | Write a reviewer-focused PR title and description, then open or update a draft PR after one confirmation. `references/description.md` is the description standard that `spec-phase` follows |
 | angular-frontend-developer | Angular frontend scaffold |
 | react-frontend-developer | React 19 standards, plus references for React Hook Form, TanStack Query, MUI, React Router, and Luxon, read only when `package.json` lists the library |
 | vue-frontend-developer | Vue frontend scaffold |

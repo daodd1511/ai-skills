@@ -4,6 +4,7 @@ skills/grill-me -> ~/.claude/skills/grill-me
 skills/handoff -> ~/.claude/skills/handoff
 skills/teach -> ~/.claude/skills/teach
 skills/terse-commit -> ~/.claude/skills/terse-commit
+skills/pr-create -> ~/.claude/skills/pr-create
 skills/angular-frontend-developer -> ~/.claude/skills/angular-frontend-developer
 skills/react-frontend-developer -> ~/.claude/skills/react-frontend-developer
 skills/vue-frontend-developer -> ~/.claude/skills/vue-frontend-developer
@@ -20,6 +21,7 @@ skills/grill-me -> ~/.agents/skills/grill-me
 skills/handoff -> ~/.agents/skills/handoff
 skills/teach -> ~/.agents/skills/teach
 skills/terse-commit -> ~/.agents/skills/terse-commit
+skills/pr-create -> ~/.agents/skills/pr-create
 skills/angular-frontend-developer -> ~/.agents/skills/angular-frontend-developer
 skills/react-frontend-developer -> ~/.agents/skills/react-frontend-developer
 skills/vue-frontend-developer -> ~/.agents/skills/vue-frontend-developer
