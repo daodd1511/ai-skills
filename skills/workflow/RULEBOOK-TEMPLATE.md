@@ -81,9 +81,11 @@ root — fix the section, don't move rules into it. An agent that lands on a
        drafts carrying auto-generated titles.
     2. Map branch → PR number with `gh stack view --json`, then give **this phase's PR**
        its real title and description: `gh pr edit <n> --title '<title>' --body-file
-       <path>`, then `gh pr ready <n>`. Pass `--body-file`, never `--body` — shell
-       quoting mangles a multi-line body. Leave every other PR in the stack alone —
-       earlier phases' descriptions may carry the user's own edits. A later phase's
+       <path>`, then `gh pr ready <n>`. The `pr-create` skill's
+       `references/description.md` sets what the description contains. Pass
+       `--body-file`, never `--body` — shell quoting mangles a multi-line body. Leave
+       every other PR in the stack alone — earlier phases' descriptions may carry the
+       user's own edits. A later phase's
        `submit --auto` that regenerates an earlier PR's title has undone this step:
        restore that title with `gh pr edit`.
     Never pass `--open` to `submit`: it marks every PR in the stack ready, publishing

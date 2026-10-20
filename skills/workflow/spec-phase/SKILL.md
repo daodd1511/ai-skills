@@ -164,9 +164,9 @@ phase, under these rules only:
    - `gh pr ready <n>`.
 
    Sequential: one `gh pr create --base <integration-branch> --title '<title>' --body-file
-   <path>`. Either way the description says what the phase changed and why. It has no
-   validation or test-evidence section and no checkboxes. A diverged stack aborting the
-   submit → surface it and stop, never retry interactively. The PR counts as open only after
+   <path>`. Either way, write the title and description by the `pr-create` skill's
+   `references/description.md`, with the stack line on stacked PRs. A diverged stack
+   aborting the submit → surface it and stop, never retry interactively. The PR counts as open only after
    `gh pr ready`; with no CI item the phase is complete at that point — don't invent a
    checks-watching step.
 7. **Only if EXECUTION.md carries a CI gate item** (opted in at plan time): after the PR
