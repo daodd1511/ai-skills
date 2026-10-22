@@ -69,7 +69,7 @@ and the audience, never at random, and name it along with the form before you bu
 |---|---|---|---|
 | **Report** | Data findings, benchmarks, incident numbers | System sans | Neutral and cool, blue accent. The default when nothing else fits |
 | **Editorial** | Concepts, explainers, narratives, scroll stories | Serif headings and body | Warm paper background, rust accent, wide measure |
-| **Technical** | Architecture, code, protocols, systems | Sans body, monospace headings and labels | Cool slate, teal accent, faint grid on the page background |
+| **Technical** | Architecture, code, protocols, systems | Sans body, monospace headings and labels | Cool slate, teal accent, plain background |
 | **Dashboard** | Many metrics at once, status pages | System sans, compact | Cards on a gray canvas, violet accent, tighter spacing |
 
 Every theme meets WCAG AA contrast (at least 4.5:1) for text, secondary text, and accent
@@ -129,15 +129,6 @@ diagrams.
     --fg: #e2e8f0; --muted: #94a3b8; --accent: #2dd4bf; --accent-soft: #0f2e2c;
   }
 }
-/* Technical grid background: */
-body {
-  background-image: linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-color: var(--bg);
-}
-/* Put figures and cards on var(--bg) so the grid never runs behind text or marks. */
-
 /* Dashboard */
 :root {
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
