@@ -5,11 +5,9 @@
 !README.md
 !bootstrap.sh
 !links.txt
-!claude/skills/**
 !claude/agents/**
 !claude/plugins/**
 !claude/CLAUDE.md
-!codex/skills/**
 !codex/AGENTS.md
 !skills/**
 
@@ -25,3 +23,4 @@ auth.json
 *.local.json
 history.jsonl
 .DS_Store
+__pycache__/

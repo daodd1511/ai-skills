@@ -1,11 +1,13 @@
 # ai-skills
 
 Personal library of authored Claude Code / Codex skills, agents, and
-instruction files. Private repo, live-synced via symlinks — this repo is
+instruction files. Public repo, live-synced via symlinks — this repo is
 the source of truth; `~/.claude`, `~/.agents`, and `~/.codex` hold symlinks
 pointing here.
 
 No settings, credentials, or machine state live here (see decisions below).
+Because the repo is public, no client or work data lives here either: examples
+and fixtures use invented projects, never real ticket text, keys, or URLs.
 
 ## Layout
 
@@ -30,7 +32,10 @@ claude/
               comments), symlinked into ~/.claude/CLAUDE.md
 codex/
   AGENTS.md - Codex copy of the global instructions, symlinked into
-              ~/.codex/AGENTS.md
+              ~/.codex/AGENTS.md and ~/.agents/AGENTS.md
+evals/      - skill eval harness (see evals/README.md). Local-only:
+              .gitignore keeps it off the remote, because it holds
+              fixtures, agent transcripts, and run output
 ```
 
 ## What's in here
@@ -49,12 +54,12 @@ codex/
 | visualize | Pick the right visual form for data/findings, render as self-contained HTML with a chosen layout and theme. Node-and-edge diagrams come from a JSON spec: `scripts/build.mjs` inlines the renderer and vendored dagre 3.1.1 (MIT); `scripts/check.mjs` screenshots the page and needs Node 22+ and Chrome |
 | bro | Restate the last message in plain language, no jargon (`/bro` only) |
 | eli5 | Explain a topic to a total beginner as a self-contained HTML page: big pictures, few words |
+| qa-handoff | Write and post the "ready for QA" Jira comment for a merged feature ticket. A fresh-context pass writes cases from the ticket alone, so a gap report shows what the code missed before QA sees the comment. `scripts/md2adf.py` converts the draft to Atlassian Document Format; needs `acli` and `gh` |
 
 `skills/workflow/` — the spec-driven workflow, five skills that run as one
 pipeline. Setup and the context-file section each project must add
 (`CLAUDE.md`, `AGENTS.md`, or both) are in `skills/workflow/SETUP.md`.
 
-| qa-handoff | Write and post the "ready for QA" Jira comment for a merged feature ticket. A fresh-context pass writes cases from the ticket alone, so a gap report shows what the code missed before QA sees the comment. `scripts/md2adf.py` converts the draft to Atlassian Document Format; needs `acli` and `gh` |
 | Skill | Notes |
 |---|---|
 | grill-with-docs | grill-me, plus it maintains the domain model as it goes |
