@@ -17,6 +17,7 @@ skills/fresh-review -> ~/.claude/skills/fresh-review
 skills/visualize -> ~/.claude/skills/visualize
 skills/bro -> ~/.claude/skills/bro
 skills/eli5 -> ~/.claude/skills/eli5
+skills/qa-handoff -> ~/.claude/skills/qa-handoff
 skills/grill-me -> ~/.agents/skills/grill-me
 skills/handoff -> ~/.agents/skills/handoff
 skills/teach -> ~/.agents/skills/teach
@@ -34,6 +35,7 @@ skills/fresh-review -> ~/.agents/skills/fresh-review
 skills/visualize -> ~/.agents/skills/visualize
 skills/bro -> ~/.agents/skills/bro
 skills/eli5 -> ~/.agents/skills/eli5
+skills/qa-handoff -> ~/.agents/skills/qa-handoff
 claude/agents/code-locator.md -> ~/.claude/agents/code-locator.md
 claude/plugins/codex -> ~/.claude/skills/codex
 claude/CLAUDE.md -> ~/.claude/CLAUDE.md

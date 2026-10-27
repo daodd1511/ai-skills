@@ -54,6 +54,7 @@ codex/
 pipeline. Setup and the context-file section each project must add
 (`CLAUDE.md`, `AGENTS.md`, or both) are in `skills/workflow/SETUP.md`.
 
+| qa-handoff | Write and post the "ready for QA" Jira comment for a merged feature ticket. A fresh-context pass writes cases from the ticket alone, so a gap report shows what the code missed before QA sees the comment. `scripts/md2adf.py` converts the draft to Atlassian Document Format; needs `acli` and `gh` |
 | Skill | Notes |
 |---|---|
 | grill-with-docs | grill-me, plus it maintains the domain model as it goes |
