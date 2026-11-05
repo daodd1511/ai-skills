@@ -2,20 +2,23 @@
 name: qa-handoff
 description: >
   Write the "ready for QA" Jira comment for a feature ticket whose pull requests have
-  merged, then post it with acli after one confirmation. Cases come from the ticket first,
-  through an independent pass that never sees the code, so the comment also shows QA what
-  the developer missed. Use when the user says "ready for QA", "write the QA comment",
+  merged, then post it with acli after one confirmation. The comment tells QA what changed,
+  what the ticket delivers, what is easy to miss, and what is not there yet, and never tells
+  QA how to test. An independent pass reads the ticket without the code, so a gap report
+  shows the developer what is missing before QA sees anything. Use when the user says "ready for QA", "write the QA comment",
   "hand off <KEY> to QA", or invokes /qa-handoff <KEY>. Not for bug tickets, retest
   comments, or other Jira comments.
 ---
 
 A QA handoff comment exists for one reader: a QA engineer who knows the product but not
-the code. That reader copies the test sections, marks each case ✅ or ❌, and files bugs
-against case IDs. `references/qa-comment.md` is the standard for every line you write.
+the code. **Our mission is only to give QA enough information about what we did and what
+we provide. QA decides what to test and how.** The comment describes changes, features,
+and behavior as facts. It never contains test steps, test cases, checkboxes, or a testing
+priority. `references/qa-comment.md` is the standard for every line you write.
 
-The developer's view is the risk. Cases written from the diff only confirm what was built.
-So pass 1 writes cases from the ticket alone, in a fresh context, and pass 2 compares them
-with the code. The gaps go to the user before anything goes to QA.
+The developer's view is the risk. A description written from the diff only repeats what
+was built. So pass 1 lists the requirements from the ticket alone, in a fresh context, and
+pass 2 compares them with the code. The gaps go to the user before anything goes to QA.
 
 Run the steps in order. Do not draft comment text before step 7.
 
@@ -56,7 +59,7 @@ this skill's directory; the scripts need only Python 3.
 4. Ask the user to confirm the list.
 5. If any PR is open or draft and the user did not say `include open PRs`, stop. List them
    and ask: wait, or draft from the merged PRs only? If the user chooses merged only, list
-   the open PRs' work in `Not in this ticket`. With the override, mark each open PR as
+   the open PRs' work in `Known limitations`. With the override, mark each open PR as
    unmerged in the confirmed list. The line "Changes are available on dev" is then the
    user's claim.
 
@@ -67,7 +70,7 @@ Exclude lockfiles, generated code, snapshots, and pure renames, as `pr-create` s
 defines them. Below 200 lines, warn that the skill is built for large feature tickets and
 ask whether to continue. This is a warning, not a stop.
 
-## 4. Pass 1: cases from the requirements
+## 4. Pass 1: requirements from the ticket
 
 1. `python3 scripts/packet.py ticket.json --exclude-email <user email> > packet.md`.
 2. Read `packet.md`. If the description has no acceptance criteria, rules, or behavior,
@@ -78,33 +81,43 @@ ask whether to continue. This is a warning, not a stop.
 ## 5. Pass 2: compare with the code
 
 Read the PR bodies and `gh pr diff <n>` for each confirmed PR. Read the diff only for what
-QA can observe: UI strings, routes, validation rules, roles and permission checks, and
-displayed states.
+QA can observe: pages, routes, UI strings, roles and permission checks, validation rules,
+displayed states, limits, timing, and exports.
 
-1. **Map each pass-1 case** to the change that implements it. Correct the expected result
-   to the exact UI string the code shows. Keep the case's `[AC]` or `[design]` tag.
-2. **Add `[impl]` cases** for observable behavior with no pass-1 case. Mark each one
-   `(not in ticket)`.
-3. **Find regression scope.** List the changed files outside the feature's own directory,
-   such as shared components, hooks, utilities, and styles. For each one, find its other
-   users with `rg -l` on its import name. Write one `[regression]` case per affected page.
-   Group pages that share one changed file only when the action and result are the same.
-4. **Find backend dependencies** in the packet's linked backend tickets and in the PR
-   bodies. Tag the dependent cases `(needs <KEY> on dev)`.
-5. **Collect limitations** from the PR bodies: deferred work, disabled controls, and API
-   gaps. Each one names its owning ticket when the PR body or packet gives one.
+1. **Map each pass-1 requirement** to the change that implements it. Note the exact UI
+   strings the code shows.
+2. **Collect the delivered features:** where each one is, what it shows, what it does,
+   and how it differs per role.
+3. **Collect what is easy to miss:** behavior a reader of the ticket would not guess.
+   Look for asynchronous work and its timing, maximums and other limits, state that
+   persists or resets, locks such as one action at a time, error placement, exact export
+   values, and differences from the design.
+4. **Mark built-but-not-required behavior:** each observable behavior with no pass-1
+   requirement. It is written as "(not in the ticket)" in the comment.
+5. **Find shared code effects.** List the changed files outside the feature's own
+   directory, such as shared components, hooks, utilities, and styles. For each one, find
+   its other users with `rg -l` on its import name. Write down each visible change on
+   another page as a fact, such as "All tables now have a border." Write nothing for a
+   shared change with no visible effect.
+6. **Find backend dependencies** in the packet's linked backend tickets and in the PR
+   bodies. Note each feature that needs one as `(needs <KEY> on dev)`.
+7. **Collect limitations** from the PR bodies: deferred work, placeholders, disabled
+   controls, all-or-nothing rules, and API gaps. Each one names its owning ticket when the
+   PR body or packet gives one.
+8. **Find test data facts:** which data gives which outcome, which systems the team does
+   not control, and anything that uses up test data.
 
 ## 6. Gap report
 
 Show the user this report before drafting. QA never sees it.
 
-- **Required, not found in the code:** each pass-1 case with no matching change. The user
-  chooses for each one: fix it first, move it to `Not in this ticket` with a reason, or
-  point to the code that implements it. Never drop one silently.
-- **Built, not required:** each `[impl]` case. Confirm that each is intended.
-- **Untestable or unclear:** from pass 1. Each becomes a question for the product owner,
-  never a case.
-- **Missing setup:** accounts, roles, or data states that a case needs and that no source
+- **Required, not found in the code:** each pass-1 requirement with no matching change.
+  The user chooses for each one: fix it first, move it to `Known limitations` with a
+  reason, or point to the code that implements it. Never drop one silently.
+- **Built, not required:** each behavior from step 5.4. Confirm that each is intended.
+- **Unclear:** from pass 1. Each becomes a question for the product owner, never a line
+  in the comment.
+- **Missing setup:** accounts, roles, or data states that QA needs and that no source
   explains. Ask the user. Never invent account names or data.
 - **Design links not read:** from pass 1. Ask whether the user wants to paste notes from
   any of them.
@@ -116,13 +129,13 @@ Wait for the user's answers, then apply them.
 1. Write `draft.md` following `references/qa-comment.md`. The version line uses the newest
    merged PR's `mergeCommit.oid`, shortened to 7 characters, and its merge date.
 2. Check the draft against the standard:
-   - Every test-section line has an ID, `→`, and one source tag.
-   - No limitation sits in a test section.
-   - No case uses code words or "works", "correctly", or "as expected".
-   - Every permission, data-isolation, and data-loss case appears in `Focus first`.
-   - `R. Regression` is present.
-3. Above about 30 cases, warn and suggest one comment per feature area.
-4. Run `python3 scripts/md2adf.py convert draft.md > draft.adf.json`. Fix the draft if it
+   - It contains no test instructions ("verify", "check that", "make sure", "try") and no
+     test structure (case IDs, checkboxes, ✅ or ❌, `→` pairs, source tags, "Focus first").
+   - Every role difference, data-isolation rule, and limit from step 5 is stated.
+   - Every shared code effect from step 5.5 is stated as a fact.
+   - No limitation sits under the delivered features.
+   - No line uses code words or "works", "correctly", or "as expected".
+3. Run `python3 scripts/md2adf.py convert draft.md > draft.adf.json`. Fix the draft if it
    reports unsupported Markdown.
 
 ## 8. Confirm, then post
@@ -143,6 +156,7 @@ Wait for the user's answers, then apply them.
 - Change the ticket status, assignee, or any other field.
 - @mention anyone.
 - Run pass 1 in this context, or give pass 1 anything beyond the packet and the brief.
+- Tell QA how to test: no test steps, test cases, checkboxes, or testing priority.
 - Put file paths, code identifiers, or reviewer notes into the comment.
 - Post with `--body` instead of `--body-file`. Shell quoting breaks a multi-line body.
 - Add AI attribution, "Generated with" footers, or emoji.

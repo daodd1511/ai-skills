@@ -54,7 +54,7 @@ evals/      - skill eval harness (see evals/README.md). Local-only:
 | visualize | Pick the right visual form for data/findings, render as self-contained HTML with a chosen layout and theme. Node-and-edge diagrams come from a JSON spec: `scripts/build.mjs` inlines the renderer and vendored dagre 3.1.1 (MIT); `scripts/check.mjs` screenshots the page and needs Node 22+ and Chrome |
 | bro | Restate the last message in plain language, no jargon (`/bro` only) |
 | eli5 | Explain a topic to a total beginner as a self-contained HTML page: big pictures, few words |
-| qa-handoff | Write and post the "ready for QA" Jira comment for a merged feature ticket. A fresh-context pass writes cases from the ticket alone, so a gap report shows what the code missed before QA sees the comment. `scripts/md2adf.py` converts the draft to Atlassian Document Format; needs `acli` and `gh` |
+| qa-handoff | Write and post the "ready for QA" Jira comment for a merged feature ticket. The comment describes what changed and what the ticket delivers, never how to test. A fresh-context pass lists requirements from the ticket alone, so a gap report shows what the code missed before QA sees the comment. `scripts/md2adf.py` converts the draft to Atlassian Document Format; needs `acli` and `gh` |
 
 `skills/workflow/` — the spec-driven workflow, five skills that run as one
 pipeline. Setup and the context-file section each project must add

@@ -17,15 +17,15 @@ DRAFT = """Changes are available on dev as of `abc1234` (merged 2026-01-05)
 
 - Accounts: a **Store Manager** and a **Clerk** in the same store.
 
-## What to test (log in as a Store Manager, then as a Clerk, open Shifts)
+## What this ticket delivers
 
-### A. Shift list
+### Shift list
 
 [Design](https://example.com/design/1)
 
-- A1 Open Shifts → the list shows "No shifts yet." when the store has none [AC]
-- A2 Store Manager: type "kim" in search → only matching clerks remain [AC]
-  - A2a Clear the search → the full list returns [impl]
+- Empty state: "No shifts yet." when the store has no shifts.
+- Search: by clerk name.
+  - Clearing the search shows the full list again.
 1. first
 2. second
 
@@ -33,7 +33,7 @@ DRAFT = """Changes are available on dev as of `abc1234` (merged 2026-01-05)
 > Design difference: the design shows one Name input.
 > The API needs first and last name.
 
-## Not in this ticket
+## Known limitations
 
 - Shift export (SHOP-12).
 """
@@ -70,8 +70,8 @@ class Md2AdfTest(unittest.TestCase):
     def test_outline_round_trip(self):
         doc = md2adf.convert(DRAFT)
         self.assertEqual(md2adf.outline(doc), md2adf.outline(json.loads(json.dumps(doc))))
-        self.assertIn("h3 A. Shift list", md2adf.outline(doc))
-        self.assertIn("  - A2a Clear the search → the full list returns [impl]", md2adf.outline(doc))
+        self.assertIn("h3 Shift list", md2adf.outline(doc))
+        self.assertIn("  - Clearing the search shows the full list again.", md2adf.outline(doc))
 
     def test_rejects_unsupported(self):
         for md in ("# Title", "| a | b |", "```\ncode\n```", "> plain quote", "  - indented start"):
